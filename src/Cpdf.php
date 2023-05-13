@@ -408,8 +408,15 @@ class Cpdf
 
     /**
      * stores the callback state for addText
+     * @var array
      */
     protected $callback = [];
+    
+    /**
+     * Stores the directive preparation callback before addText
+     * @var array
+     */
+    protected $prep_callback = [];
 
     /**
      * Constructor - start with a new PDF document.
@@ -2867,6 +2874,21 @@ class Cpdf
         $orgTextState = $this->currentTextState;
         $info = null;
 
+        // call any opening "prepare" callback
+        foreach (array_filter($this->prep_callback, function ($v) {
+            return $v['isCustom'];
+        }) as $info) {
+            $info['x'] = $x;
+            $info['y'] = $y;
+            $info['width'] = $width;
+
+            $info['status'] = 'prepare';
+            $this->{$info['func']}($info);
+            $width -= $info['x'] - $x;
+            $x = $info['x'];
+            $y = $info['y'];
+        }
+
         while (($p=mb_strpos($text, '<', $offset, 'UTF-8')) !== false) {
             $pEnd = mb_strpos($text, '>', $p, 'UTF-8');
 
@@ -2891,7 +2913,8 @@ class Cpdf
                 } else {
                     $prev = null;
                 }
-                // when its a force break and a previous result is available
+
+                // when its a force break with a trailing space and a previous result is available
                 if ($textLength[3] == 0 && $prev != null && !empty($prev['text'])) {
                     // recover the width and position
                     $width += $textLength[0];
@@ -2945,6 +2968,7 @@ class Cpdf
                     'y' => $y,
                     'angle' => $angle,
                     'descender' => null,
+                    'width' => $width,
                     'height' => $this->getFontHeight($size),
                     'isCustom' => $isCustom,
                     'noClose' => $noClose
@@ -2953,6 +2977,21 @@ class Cpdf
                 if (!$isCustom) {
                     $this->defaultFormatting($info);
                     $this->setCurrentFont();
+                }
+                else{
+                    $info['status'] = 'prepare';
+                    $this->{$info['func']}($info);
+                    $width -= $info['x'] - $x;
+                    $x = $info['x'];
+                    $y = $info['y'];
+                    $info['width'] = $width;
+                    $info['status'] = (!$isEnd) ? 'start' : 'end';
+
+                    if ($info['status'] == 'start' && !$info['noClose']) {
+                        $this->prep_callback[$info['func']] = $info;
+                    } else {
+                        unset($this->prep_callback[$info['func']]);
+                    }
                 }
 
                 /*if (!$isEnd && !$noClose && !isset($this->callback[$func])) {
@@ -3077,6 +3116,12 @@ class Cpdf
             $info['x'] = $x;
             $info['y'] = $y;
             $this->{$info['func']}($info);
+            // readjust original width
+            $orgWidth -= $info['x'] - $x;
+            $x = $info['x'];
+            $y = $info['y'];
+            // Reset original X position
+            $orgX = $x;
         }
 
         if ($angle == 0) {
@@ -3104,14 +3149,19 @@ class Cpdf
                     $cb['x'] += ($x - $orgX) + $xOffset;
 
                     $this->addContent(' ET');
-                    $this->{$cb['func']}($cb);
 
                     if ($cb['status'] == 'start' && !$cb['noClose']) {
+                        // We need to set the global callback after calling
+                        // the custom cb so we can know if we're in the first line
+                        $this->{$cb['func']}($cb);
                         $this->callback[$cb['func']] = $cb;
                     } else {
+                        // We need to unset the global callback before calling
+                        // the custom cb so we can know if we're in the last line
                         unset($this->callback[$cb['func']]);
+                        $this->{$cb['func']}($cb);
                     }
-                   
+
                     if ($angle == 0) {
                         $this->addContent("\n" . sprintf('BT %.3F %.3F Td', $cb['x'], $y));
                     } else {
