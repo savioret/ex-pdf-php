@@ -31,6 +31,10 @@ class Creport extends Cezpdf
     {
         // this callback records all of the table of contents entries, it also places a destination marker there
         // so that it can be linked too
+        if ($info['status'] != 'start') {
+            return;
+        }
+
         $tmp = $info['p'];
         $lvl = $tmp[0];
         $lbl = rawurldecode(substr($tmp, 1));
@@ -41,6 +45,9 @@ class Creport extends Cezpdf
 
     public function dots($info)
     {
+        if ($info['status'] != 'start') {
+            return;
+        }
         // draw a dotted line over to the right and put on a page number
         $tmp = $info['p'];
         $lvl = $tmp[0];
