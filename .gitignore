@@ -3,6 +3,7 @@ vendor
 tests/out
 
 .vscode/settings.json
+.vscode/launch.json
 
 *.phar
 *.log
