@@ -1087,8 +1087,8 @@ class Cezpdf extends Cpdf
             // now, if this has moved to a new page, then abort the transaction, move to a new page, and put it there
             // do not check on the second time around, to avoid an infinite loop
             if ($this->ezPageCount != $startPage && $secondGo == 0) {
-                $this->transaction('rewind');
                 $this->ezNewPage();
+                $this->transaction('rewind');
                 $y = $this->y - $gap - $descender;
                 $ok = 0;
                 $secondGo = 1;
