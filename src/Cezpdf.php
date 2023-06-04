@@ -368,6 +368,9 @@ class Cezpdf extends Cpdf
         }
 
         $this->setBackground();
+
+        // extend allowed tags
+        $this->allowedTags .= '|bullet:?.*?|indent:?[0-9]*|fontsize:?[0-9]*|image:?.*?';
     }
 
     /**
