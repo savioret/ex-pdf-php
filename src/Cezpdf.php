@@ -507,6 +507,37 @@ class Cezpdf extends Cpdf
         $this->ezSetMargins($top, $bottom, $left, $right);
     }
 
+
+    public function ezLeftMargin()
+    {
+        return $this->ez['leftMargin'];
+    }
+
+    public function ezRightMargin()
+    {
+        return $this->ez['rightMargin'];
+    }
+
+    public function ezPageWidth()
+    {
+        return $this->ez['pageWidth'];
+    }
+
+    public function ezPageHeight()
+    {
+        return $this->ez['pageHeight'];
+    }
+
+    public function ezContentWidth()
+    {
+        return $this->ez['pageWidth'] - $this->ez['rightMargin'] - $this->ez['leftMargin'];
+    }
+
+    public function ezContentHeight()
+    {
+        return $this->ez['pageHeight'] - $this->ez['topMargin'] - $this->ez['bottomMargin'];
+    }
+
     /**
      * create a new page.
      *
