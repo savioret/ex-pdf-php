@@ -72,6 +72,26 @@ class Cezpdf extends Cpdf
      * background color/image information.
      */
     protected $ezBackground = [];
+
+    /**
+     * Stored max height of elements for the current processed text
+     * @var int
+     */
+    protected $addTextMaxHeight = 0;
+    
+    /**
+     * Stored max font size for the current processed text
+     * @var int
+     */
+    protected $addTextMaxSize = 0;
+
+    /**
+     * Stored original font size for the current processed text
+     * @var int
+     */
+    protected $addTextOrigSize = 0;
+
+
     /**
      * Assuming that people don't want to specify the paper size using the absolute coordinates
      * allow a couple of options:
@@ -1479,8 +1499,9 @@ class Cezpdf extends Cpdf
                     $middle = ($x1 + $x0) / 2;
                     $this->y -= $this->getFontHeight($options['titleFontSize']);
                 }
-                $this->addText($middle - $w / 2, $this->y, $options['titleFontSize'], $title);
-                $this->y -= $options['titleGap'];
+                $lineHeight = $orgHeight;
+                $this->addTextEx($middle - $w / 2, $this->y, $options['titleFontSize'], $title, 0 ,$lineHeight);
+                $this->y -= $options['titleGap'] + $lineHeight-$orgHeight;
             }
             // margins may have changed on the newpage
             $dm = $this->ez['leftMargin'] - $baseLeftMargin;
@@ -1493,7 +1514,8 @@ class Cezpdf extends Cpdf
             $y = $this->y; // to simplify the code a bit
 
             // make the table
-            $height = $this->getFontHeight($options['fontSize']);
+            $orgHeight = $this->getFontHeight($options['fontSize']);
+            $height = $orgHeight;
             $descender = $this->getFontDescender($options['fontSize']);
 
             $y0 = $y - $options['rowGap'];
@@ -1732,13 +1754,16 @@ class Cezpdf extends Cpdf
                                         }
 
                                         // apply the color to the text
+                                        $lineHeight = $orgHeight;
                                         if (is_array($textColor)) {
                                             $this->setColor($textColor[0], $textColor[1], $textColor[2]);
-                                            $line = $this->addText($pos[$colName], $this->y, $options['fontSize'], $line, $maxWidth[$colName], $just);
+                                            $line = $this->addTextEx($pos[$colName], $this->y, $options['fontSize'], $line, $maxWidth[$colName], $lineHeight, $just);
                                         } else {
                                             $this->setColor($options['textCol'][0], $options['textCol'][1], $options['textCol'][2]);
-                                            $line = $this->addText($pos[$colName], $this->y, $options['fontSize'], $line, $maxWidth[$colName], $just);
+                                            $line = $this->addTextEx($pos[$colName], $this->y, $options['fontSize'], $line, $maxWidth[$colName], $lineHeight, $just);
                                         }
+                                        // adjust extra increment in y
+                                        $this->y -= $lineHeight - $orgHeight;
                                     }
                                 }
                             }
@@ -1932,15 +1957,20 @@ class Cezpdf extends Cpdf
             $just = 'left';
         }
 
+        $fontHeight = $this->getFontHeight($size);
+        $padding = 0;
         // modifications to give leading and spacing based on those given by Craig Heydenburg 1/1/02
         if (is_array($options) && isset($options['leading'])) { //# use leading instead of spacing
             $height = $options['leading'];
+            $padding = max (0, $height - $fontHeight);
         } elseif (is_array($options) && isset($options['spacing'])) {
-            $height = $this->getFontHeight($size) * $options['spacing'];
+            $height = $fontHeight * $options['spacing'];
+            $padding = $height - $fontHeight;
         } else {
-            $height = $this->getFontHeight($size);
+            $height = $fontHeight;
         }
-
+        $orgHeight = $height;
+        $dy = 0; // extra increment per line
         $lines = preg_split("[\r\n|\r|\n]", $text);
         $c = count($lines);
         for ($i = 0; $i < $c; $i++) {
@@ -1948,7 +1978,8 @@ class Cezpdf extends Cpdf
             $start = 1;
             while ($l = strlen($line) || $start) {
                 $start = 0;
-                $this->y = $this->y - $height;
+                $this->y = $this->y - $height - $dy;
+                
                 if ($this->y < $this->ez['bottomMargin']) {
                     if ($test) {
                         $newPage = true;
@@ -1971,13 +2002,20 @@ class Cezpdf extends Cpdf
                 
                 if ($just == 'full' && (empty($lines[$i + 1]) || $c == $i + 1)) {
                     // do not fully justify if its the absolute last line (taking line breaks into account)
-                    $tmp = $this->addText($left, $this->y, $size, $line, $right - $left, $just, 0, 0, 1);
+                    $aux = $height;
+                    $tmp = $this->addTextEx($left, $this->y, $size, $line, $right - $left, $aux, $just, 0, 0, 1);
                     if (!strlen($tmp)) {
                         $just = "left";
                     }
                 }
+                $lineHeight = $height;
+                $line = $this->addTextEx($left, $this->y, $size, $line, $right - $left,  $lineHeight, $just, 0, 0, $test);
+                $dy = 0;
+                if ($padding && $lineHeight != $orgHeight) {
+                    $dy = $padding;
+                }
 
-                $line = $this->addText($left, $this->y, $size, $line, $right - $left, $just, 0, 0, $test);
+                $this->y -= max(0, $lineHeight - $orgHeight);
 
                 if (is_array($options) && isset($options['justification'])) {
                     // recover justification
@@ -2228,6 +2266,108 @@ class Cezpdf extends Cpdf
         }
         eval($this->ez['templates'][$id]['code']);
     }
+
+    /**
+     * callback triggered right before text is added and after the text was
+     * prepared in its parts array.
+     *
+     * @param array $parts
+     * @param float $x
+     * @param float $y
+     * @param float $size
+     * @param string $text
+     * @param float $width
+     * @param float $height
+     * @param string $justification
+     * @param float $angle
+     * @param string $wordSpaceAdjust
+     * @param bool $test
+     * @return void
+     */
+    protected function beforeAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $orgWidth, &$height, &$justification, &$angle, &$wordSpaceAdjust, $test)
+    {
+        $yOffset = 0;
+        
+        $this->addTextOrigSize = $size;
+        $this->addTextMaxSize = 0;
+        $this->addTextMaxHeight = 0;
+
+        // get maximum size and height from custom callbacks in current text
+        foreach ($parts as $p) {
+            if (isset($p['callback']['size'])) {
+                $this->addTextMaxSize = max($this->addTextMaxSize, $p['callback']['size']);
+            }
+            // only compute height on custom callbacks
+            if (!empty($p['callback']['isCustom']) && isset($p['callback']['height'])) {
+                $this->addTextMaxHeight = max($this->addTextMaxHeight, $p['callback']['height']);
+            }
+        }
+        foreach ($this->callback as $p) {
+            if (isset($p['size'])) {
+                $this->addTextMaxSize = max($this->addTextMaxSize, $p['size']);
+            }
+            // only compute height on custom callbacks
+            if (!empty($p['callback']['isCustom']) && isset($p['callback']['height'])) {
+                $this->addTextMaxHeight = max($this->addTextMaxHeight, $p['callback']['height']);
+            }
+        }
+
+        $maxFontHeight = $this->getFontHeight($this->addTextMaxSize);
+        if($this->addTextMaxSize && $this->addTextMaxSize != $this->addTextOrigSize ) {
+            $yOffset = $maxFontHeight;
+        }
+
+        if (empty($this->addTextMaxSize))
+            $this->addTextMaxSize = $this->addTextOrigSize;
+
+        // NOTE: This is a known issue. Fix is hacky to do.
+        // Last text size was bigger, add some offset
+        // if(isset($this->prevAddTextMaxSize) && ($this->prevAddTextMaxSize > $this->addTextMaxSize) ) {
+        //     if(!$yOffset){
+        //         $yOffset = $this->getFontHeight($this->addTextMaxSize);
+        //     }
+        //     // if previous text was exactly above
+        //     if(isset($this->addTextY) && $this->addTextY >= $y && (($this->addTextY - $y)*0.9 <= $this->getFontHeight($this->prevAddTextMaxSize)) ) {
+        //        $yOffset += $this->getFontHeight($this->prevAddTextMaxSize - $this->addTextMaxSize)  * 0.15;
+        //     }
+        // }
+
+        if ($this->addTextMaxHeight && $this->addTextMaxHeight > $height && $this->addTextMaxHeight > $maxFontHeight ) {
+            $yOffset = $this->addTextMaxHeight;
+        }
+
+        $this->addTextYOffset = $yOffset;
+        
+        if ($yOffset) {
+            $height = $yOffset;// - $this->getFontHeight($this->addTextOrigSize);
+            // out of page, then dont displace ?? TODO:review
+            if ($y - $yOffset < $this->ez['bottomMargin']) {
+                // then make a new page
+               // $this->ezNewPage();
+            }
+            else {
+                $y -= $yOffset - $this->getFontHeight($this->addTextOrigSize);
+            }
+        }
+
+        // --- bounding box (Debug ONLY)
+        // $this->saveState();
+        // $this->setStrokeColor(1,0,0);
+        // $hh = $height;
+        // $this->rectangle($x, $y, $orgWidth, $hh);
+        // $this->restoreState();
+    }
+
+    protected function afterAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $height, &$justification, &$angle, &$wordSpaceAdjust, $test)
+    {
+        if ($this->addTextYOffset && $this->addTextMaxSize > $size) {
+            $this->y += $this->getFontDescender($this->addTextMaxSize);
+        }
+        $this->addTextY = $this->y;
+        $this->prevAddTextMaxSize = $this->addTextMaxSize;
+        $this->addTextMaxHeight = $this->addTextMaxSize = 0;
+    }
+
 
     /**
      * callback function for internal links.
