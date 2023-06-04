@@ -2820,6 +2820,86 @@ class Cpdf
         return $text;
     }
 
+    /**
+     * callback triggered right before text is added and after the text was
+     * prepared in its parts array.
+     *
+     * @param mixed $parts
+     * @param mixed $x
+     * @param mixed $y
+     * @param mixed $size
+     * @param mixed $text
+     * @param mixed $width
+     * @param mixed $height
+     * @param mixed $justification
+     * @param mixed $angle
+     * @param mixed $wordSpaceAdjust
+     * @param mixed $test
+     * @return void
+     */
+    protected function beforeAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $orgWidth, &$height, &$justification, &$angle, &$wordSpaceAdjust, $test)
+    {
+
+    }
+
+
+    protected function afterAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $height, &$justification, &$angle, &$wordSpaceAdjust, $test)
+    {
+
+    }
+
+
+    /**
+     * Process the custom text callback call during the preparation stage of addText
+     * @param bool $isEnd
+     * @param array $info all callback information
+     * @param float $x x position of the addText
+     * @param float $y y position of the addText
+     * @param float $size font size
+     * @param float $width available width to add the text
+     * @return void
+     */
+    protected function processPrepareCallback($isEnd, &$info, &$x, &$y, &$size, &$width)
+    {
+        $status = $isEnd ? 'prepare_end' : 'prepare_start';
+        $info['status'] = $status;
+        $this->processTextCallback($info, $x, $y, $size, $width);
+
+        // set status back to the corresponding addText stage
+        $info['status'] = $isEnd ? 'end' : 'start';
+    }
+
+    /**
+     * Process the custom text callback call during the process stage of addText
+     * @param array $info all callback information
+     * @param float $x x position of the addText
+     * @param float $y y position of the addText
+     * @param float $size font size
+     * @param float $width available width to add the text
+     * @return void
+     */
+    protected function processTextCallback(&$info, &$x, &$y, &$size, &$width)
+    {
+        $info['x'] = $x;
+        $info['y'] = $y;
+        $info['width'] = $width;
+        $info['size'] = $size;
+        $override = $this->{$info['func']}($info);
+        if($override) {
+            if (isset($override['x'])) {
+                $width -= $override['x'] - $x;
+                $x = $override['x'];
+            }
+
+            if (isset($override['size'])) {
+                $size = $override['size'];
+            }
+
+            foreach($override as $k=>$v) {
+                $info[$k] = $v;
+            }
+        }
+    }
 
     /**
      * Prepares the text with directives for later processing in text addition.
@@ -2872,21 +2952,16 @@ class Cpdf
         $offset = 0;
         $length = mb_strlen($text, 'UTF-8');
         $orgTextState = $this->currentTextState;
+        $orgSize = $size;
+        $orgWidth = $width;
+        $orgHeight = $this->getFontHeight($size);
         $info = null;
 
         // call any opening "prepare" callback
         foreach (array_filter($this->prep_callback, function ($v) {
             return $v['isCustom'];
         }) as $info) {
-            $info['x'] = $x;
-            $info['y'] = $y;
-            $info['width'] = $width;
-
-            $info['status'] = 'prepare';
-            $this->{$info['func']}($info);
-            $width -= $info['x'] - $x;
-            $x = $info['x'];
-            $y = $info['y'];
+            $this->processPrepareCallback(false/*start*/, $info, $x, $y, $size, $width);
         }
 
         while (($p=mb_strpos($text, '<', $offset, 'UTF-8')) !== false) {
@@ -2966,10 +3041,14 @@ class Cpdf
                     'status' => (!$isEnd) ? 'start' : 'end',
                     'x' => $x,
                     'y' => $y,
+                    'size' => $size,
+                    'orgSize' => $orgSize,
                     'angle' => $angle,
                     'descender' => null,
+                    'orgWidth' => $orgWidth,
                     'width' => $width,
                     'height' => $this->getFontHeight($size),
+                    'orgHeight' => $orgHeight,
                     'isCustom' => $isCustom,
                     'noClose' => $noClose
                 ];
@@ -2978,27 +3057,26 @@ class Cpdf
                     $this->defaultFormatting($info);
                     $this->setCurrentFont();
                 }
-                else{
-                    $info['status'] = 'prepare';
-                    $this->{$info['func']}($info);
-                    $width -= $info['x'] - $x;
-                    $x = $info['x'];
-                    $y = $info['y'];
-                    $info['width'] = $width;
-                    $info['status'] = (!$isEnd) ? 'start' : 'end';
+                else {
+                    $this->processPrepareCallback( $isEnd, $info, $x, $y, $size, $width );
 
-                    if ($info['status'] == 'start' && !$info['noClose']) {
+                    // update global callback
+                    if (!$isEnd && !$info['noClose']) {
                         $this->prep_callback[$info['func']] = $info;
                     } else {
                         unset($this->prep_callback[$info['func']]);
                     }
-                }
 
-                /*if (!$isEnd && !$noClose && !isset($this->callback[$func])) {
-                    $this->callback[$func] = $info;
-                } else {
-                    unset($this->callback[$func]);
-                }*/
+                    // edge case
+                    if($width < 0) {
+                        $text = mb_substr($text, $p, null, 'UTF-8');
+                        // TODO: call getTextLength again ?
+                        array_push($result, ['text' => $part, 'nspaces' => $textLength[4], 'callback' => null]);
+                        $this->currentTextState = $orgTextState;
+                        $this->setCurrentFont();
+                        return $result;
+                    }
+                }
             }
 
             array_push($result, ['text' => $part, 'nspaces' => $textLength[4], 'callback' => $info]);
@@ -3073,13 +3151,14 @@ class Cpdf
      * @param float $size The size of the text
      * @param string $text The text to be added
      * @param float $width The maximum width allowed for the text (default: 0)
+     * @param float $height height of the text, also outputs the maximum height of the line after processing
      * @param string $justification The type of text justification ('left', 'right', 'center', 'full') (default: 'left')
      * @param float $angle The angle in degrees by which the text should be rotated (default: 0)
      * @param float $wordSpaceAdjust The amount of space between words (default: 0)
      * @param bool $test Flag indicating whether the function is being used for testing purposes (default: 0)
      * @return string The text that was added to the document
      */
-    public function addText($x, $y, $size, $text, $width = 0, $justification = 'left', $angle = 0, $wordSpaceAdjust = 0, $test = 0)
+    public function addTextEx($x, $y, $size, $text, $width = 0, &$height, $justification = 'left', $angle = 0, $wordSpaceAdjust = 0, $test = 0)
     {
         if (strlen($text) <= 0) {
             return '';
@@ -3095,8 +3174,12 @@ class Cpdf
 
         $orgWidth = $width;
         $orgX = $x;
-        
+
+        $height = max($height, $this->GetFontHeight($size));
+
         $parts = $this->addTextWithDirectives($text, $x, $y, $size, $width, $justification, $angle, $wordSpaceAdjust);
+
+        $this->beforeAddText($parts, $x, $y, $size, $text, $width, $orgWidth, $height, $justification, $angle, $wordSpaceAdjust, $test);
 
         $parsedText = implode('', array_map(function ($v) {
             return $v['text'];
@@ -3113,13 +3196,8 @@ class Cpdf
         foreach (array_filter($this->callback, function ($v) {
             return $v['isCustom'];
         }) as $info) {
-            $info['x'] = $x;
-            $info['y'] = $y;
-            $this->{$info['func']}($info);
-            // readjust original width
-            $orgWidth -= $info['x'] - $x;
-            $x = $info['x'];
-            $y = $info['y'];
+            // readjust original width instead of width
+            $this->processTextCallback($info, $x, $y, $size, $width);
             // Reset original X position
             $orgX = $x;
         }
@@ -3153,13 +3231,13 @@ class Cpdf
                     if ($cb['status'] == 'start' && !$cb['noClose']) {
                         // We need to set the global callback after calling
                         // the custom cb so we can know if we're in the first line
-                        $this->{$cb['func']}($cb);
+                        $this->processTextCallback($cb, $cb['x'], $y, $size, $width);
                         $this->callback[$cb['func']] = $cb;
                     } else {
                         // We need to unset the global callback before calling
                         // the custom cb so we can know if we're in the last line
                         unset($this->callback[$cb['func']]);
-                        $this->{$cb['func']}($cb);
+                        $this->processTextCallback($cb, $cb['x'], $y, $size, $width);
                     }
 
                     if ($angle == 0) {
@@ -3184,8 +3262,18 @@ class Cpdf
             $this->{$info['func']}($info);
         }
 
+        $this->afterAddText($parts, $x, $y, $size, $text, $width, $height, $justification, $angle, $wordSpaceAdjust, $test);
+
         return $text;
     }
+    
+
+    public function addText($x, $y, $size, $text, $width = 0, $justification = 'left', $angle = 0, $wordSpaceAdjust = 0, $test = 0)
+    {
+        $height = 0;
+        return $this->addTextEx($x, $y, $size, $text, $width, $height, $justification, $angle, $wordSpaceAdjust, $test);
+    }
+
 
     /**
      * Add wrapped text to the document at the given coordinates.
@@ -3205,8 +3293,9 @@ class Cpdf
         // Split the input text into an array of lines based on line breaks and wrap the lines as necessary
         $parts = preg_split('/$\R?^/m', $text);
         foreach ($parts as $v) {
-            $text = $this->addText($x, $y, $size, $v, $width, $justification, $angle, $wordSpaceAdjust, $test);
-            $y -= $this->getFontHeight($size);
+            $height = 0;
+            $text = $this->addText2($x, $y, $size, $v, $width, $height, $justification, $angle, $wordSpaceAdjust, $test);
+            $y -= $height;
         }
     }
 
