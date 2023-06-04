@@ -2824,17 +2824,17 @@ class Cpdf
      * callback triggered right before text is added and after the text was
      * prepared in its parts array.
      *
-     * @param mixed $parts
-     * @param mixed $x
-     * @param mixed $y
-     * @param mixed $size
-     * @param mixed $text
-     * @param mixed $width
-     * @param mixed $height
-     * @param mixed $justification
-     * @param mixed $angle
-     * @param mixed $wordSpaceAdjust
-     * @param mixed $test
+     * @param array $parts
+     * @param float $x
+     * @param float $y
+     * @param float $size
+     * @param string $text
+     * @param float $width
+     * @param float $height
+     * @param string $justification
+     * @param float $angle
+     * @param string $wordSpaceAdjust
+     * @param bool $test
      * @return void
      */
     protected function beforeAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $orgWidth, &$height, &$justification, &$angle, &$wordSpaceAdjust, $test)

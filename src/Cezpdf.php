@@ -648,6 +648,15 @@ class Cezpdf extends Cpdf
     }
 
     /**
+     * Get the current Y position in the codument
+     * @return float
+     */
+    public function ezGetY() : float
+    {
+        return $this->y;
+    }
+
+    /**
      * changes the Y position of the document by writing positive or negative numbers.
      * If Y reaches the bottom margin a new page is generated.
      *
@@ -670,6 +679,18 @@ class Cezpdf extends Cpdf
             }
         }
     }
+
+    public function ezSetFontSize($s)
+    {
+        $this->ez['fontSize'] = $s;
+    }
+
+    public function ezGetFontSize()
+    {
+        return $this->ez['fontSize'];
+    }
+
+
 
     /**
      * put page numbers on the pages from here.
@@ -1888,11 +1909,12 @@ class Cezpdf extends Cpdf
     {
         // this function will intially be used to implement underlining support, but could be used for a range of other
         // purposes
-        $search = ['<u>', '<U>', '</u>', '</U>'];
-        $replace = ['<c:uline>', '<c:uline>', '</c:uline>', '</c:uline>'];
+        $search = ['<u>', '<U>', '</u>', '</U>', '</li><li>', '<li>', '</li>'];
+        $replace = ['<c:uline>', '<c:uline>', '</c:uline>', '</c:uline>', '</c:bullet>\n<c:bullet>', '<c:bullet>', '</c:bullet>'];
 
-        return str_replace($search, $replace, $text);
+        return str_ireplace($search, $replace, $text);
     }
+
 
     /**
      * this will add a string of text to the document, starting at the current drawing
@@ -2169,6 +2191,131 @@ class Cezpdf extends Cpdf
         }
     }
 
+
+    /**
+     * Draw a bullet shape for text enumerations with different properties
+     *
+     * @param mixed $options
+     *   'line_space' => 0.2, // separacion entre lineas (en puntos)
+     *   'shape' => 'circle', // forma del punto [circle|square|box]
+     *   'point_size' => 4, // tamaño del bullet (en puntos)
+     *   'margin' => 20, // sangrado izquierdo, similar a aleft pero relativo al cursor actual
+     *   'padding' => 10, // sangrado derecho despues del punto
+     *   'aleft' => 40, // posicion absoluta independientemente del margen
+     *   'point_color' => [1, 1, 0], // color del bullet
+     * @param bool $test
+     * @return float|int
+     */
+    public function ezBullet($options, $test=false) : float
+    {
+        $pcolor = $options['point_color'] ?? null;
+        $shape = $options['shape'] ?? 'circle';
+        $font_size = $this->GetFontSize();
+        $psize = $options['point_size'] ?? $font_size/2.5;
+        $margin = $options['margin'] ?? 20;
+
+        $point_pos = $this->leftMargin() + $margin;
+        if(isset($options['aleft'])) {
+            // absolute pos
+            $point_pos = $options['aleft'];
+        }
+        elseif (isset($options['margin']) ) {
+            // relative to left margin
+            $point_pos = $this->leftMargin() + $options['margin'];
+        }
+
+        
+
+        if($test) {
+            return $point_pos + $psize;
+        }
+
+        $this->saveState();
+        if ($pcolor) {
+            $this->setColor($pcolor[0], $pcolor[1], $pcolor[2]);
+        }
+        $this->setLineStyle($font_size / 10);
+    
+
+        $fontHeight = $this->getFontHeight($font_size);
+        $height = $fontHeight;
+
+        if (isset($options['leading'])) {
+            // use leading instead of spacing even if defined both
+            $height = $options['leading'];
+        } elseif (isset($options['spacing']) ) {
+            $height = $fontHeight * $options['spacing'];
+        }
+
+        $ypos = $this->GetY() - $height + $fontHeight/2.4;
+        //$this->ezDrawHLine(1.0, $ypos);
+        switch ($shape) {
+            default:
+            case 'circle':
+                $r = $psize/2;
+
+                $this->filledEllipse(
+                    $point_pos+$r,
+                    $ypos,
+                    $r
+                );
+                break;
+            case 'square':
+                $this->filledRectangle(
+                    $point_pos,
+                    $ypos-$psize/2,
+                    $psize,
+                    $psize
+                );
+                break;
+            case 'box':
+                $this->rectangle(
+                    $point_pos,
+                    $ypos-$psize/2,
+                    $psize,
+                    $psize
+                );
+                break;
+        }
+
+        $this->restoreState();
+
+        //$this->ezSetY($saved_ypos);
+        return $point_pos + $psize;
+    }
+
+
+    /**
+     * Draws a bullet enumeration text item
+     * @see ezBullet for options explanation
+     * @see ezText for text options
+     * @param string $txt text
+     * @param string $size text size
+     * @param array $options text and bullet options (combined) 
+     * @return void
+     */
+    public function ezBulletText(string $txt, $size = '0', $options = [])
+    {
+        $topts = array_filter_keys($options, ['spacing', 'leading', 'justification', 'aleft', 'aright']);
+        $bopts = array_filter_keys($options, ['point_size', 'margin', 'padding', 'shape', 'point_color', 'line_space']);
+        $font_size = $size? $size : $this->ezGetFontSize();
+
+        foreach($bopts as $k=>$v) {
+            if (is_array($v)) {
+                $v = implode('#', $v);
+            }
+            $pairs[] = "$k=$v";
+        }
+        $bopts_str = '';
+        if(!empty($pairs)) {
+            $bopts_str = ':' . implode(',', $pairs);
+        }
+        $this->ezText("<c:bullet$bopts_str>$txt</c:bullet>", $size, $topts);
+
+        // ezText changes font size, so restore TODO:Review this
+        // $this->ez['fontSize'] = $font_size;
+    }
+
     /**
      * Output the PDF content as stream.
      *
@@ -2319,18 +2466,6 @@ class Cezpdf extends Cpdf
 
         if (empty($this->addTextMaxSize))
             $this->addTextMaxSize = $this->addTextOrigSize;
-
-        // NOTE: This is a known issue. Fix is hacky to do.
-        // Last text size was bigger, add some offset
-        // if(isset($this->prevAddTextMaxSize) && ($this->prevAddTextMaxSize > $this->addTextMaxSize) ) {
-        //     if(!$yOffset){
-        //         $yOffset = $this->getFontHeight($this->addTextMaxSize);
-        //     }
-        //     // if previous text was exactly above
-        //     if(isset($this->addTextY) && $this->addTextY >= $y && (($this->addTextY - $y)*0.9 <= $this->getFontHeight($this->prevAddTextMaxSize)) ) {
-        //        $yOffset += $this->getFontHeight($this->prevAddTextMaxSize - $this->addTextMaxSize)  * 0.15;
-        //     }
-        // }
 
         if ($this->addTextMaxHeight && $this->addTextMaxHeight > $height && $this->addTextMaxHeight > $maxFontHeight ) {
             $yOffset = $this->addTextMaxHeight;
@@ -2520,5 +2655,210 @@ class Cezpdf extends Cpdf
                 $this->restoreState();
                 break;
         }
+    }
+
+
+    /**
+     * callback function for indented text.
+     * **Example**<br>
+     * <pre>
+     * $pdf->ezText('<c:indent:50>Text</c:indent>');
+     * </pre>
+     *
+     * @param $info
+     */
+    public function indent($info)
+    {
+        static $saved_x;
+        static $indent = 20;
+        $override = [];
+        switch ($info['status']) {
+            case 'prepare_start':
+                if (!isset($this->callback['indent']) && !isset($this->prep_callback['indent'])) {
+                    $saved_x = $info['x'];
+                }
+                //$indent = 20;
+                if(isset($info['p'])) {
+                    $indent = $info['p'];
+                }
+                $override['x'] = $saved_x + $indent;
+                break;
+            case 'start':
+                if(isset($info['p'])) {
+                    $indent = $info['p'];
+                }
+                $override['x'] = $saved_x + $indent;
+                break;
+            case 'end':
+                // if (empty($this->callback['indent'])) {
+                //     $info['x'] = 0;
+                // }
+                break;
+        }
+
+        return $override;
+    }
+
+    public function fontsize($info)
+    {
+        $override = []; // overriden options
+        assert($info['size'] != null);
+
+        switch ($info['status']) {
+            case 'prepare_start':
+                $override['size'] = $info['p'];
+                break;
+            case 'start':
+                $override['size'] = $info['p'];
+                break;
+            case 'prepare_end':
+            case 'end':
+                $override['size'] = $info['orgSize'];
+                break;
+        }
+
+        return $override;
+    }
+
+
+    public function image(&$info)
+    {
+        $override = []; // overriden data
+        assert($info['size'] != null);
+
+        switch ($info['status']) {
+            case 'prepare_start':
+
+                $opts = explode(",", $info['p']);
+
+                // Set available width if nothing passed
+                if (empty($opts[1])) {
+                    $opts[1] = $info['orgWidth'];
+                }
+
+                // TODO: sobra el if ????
+                if (!isset($this->callback['image']) && !isset($this->prep_callback['image'])) {
+                    $info['saved_x'] = $info['x'];
+
+                    $imageInfo = getimagesize($opts[0]);
+                    $width = $imageInfo[0];
+                    $height = $imageInfo[1];
+                    $ratio = $width / $height;
+                    $width_in_page = min($info['orgWidth']-1, $opts[1]);
+                    $info['image_height'] = $width_in_page / $ratio;
+                }
+
+                $override['x'] = $info['x'] +  min($info['orgWidth']-1, $opts[1]);
+                $override['height'] = $info['image_height'];
+                break;
+
+            case 'start':
+                
+                $opts = explode(",", $info['p']);
+                
+                // Set available width if nothing passed
+                if (empty($opts[1])) {
+                    $opts[1] = $info['orgWidth'];
+                }
+
+                $image_width = min($info['orgWidth']-1, $opts[1]);
+                $override['x'] = $info['saved_x'] + $image_width;
+                $override['height'] = $info['image_height'];
+
+                $y = $this->y;
+                $this->y = $info['y'] + $info['image_height'];
+                $m = $this->ez['leftMargin'];
+                $this->ez['leftMargin'] = $info['saved_x'];
+
+                // draw only if it fits on the remaining space
+                if ( $image_width < $info['orgWidth']) {
+                    $this->ezImage(
+                        $opts[0],
+                        0, // pad
+                        $image_width,
+                        'none', // resize
+                        'left', // just
+                        0, // angle
+                        '', // border
+                    );
+                    $this->ez['leftMargin'] = $m;
+                }
+                $this->y = $y;
+                break;
+        }
+
+        return $override;
+    }
+
+
+    /**
+     * callback function for bullets.
+     *
+     * **Example**<br>
+     * <pre>
+     * $pdf->ezText('<c:bullet:opt=val,opt=val>Text</c:ilink>');
+     * </pre>
+     *
+     * @param $info
+     */
+    public function bullet($info)
+    {
+        static $saved_x;
+        static $saved_bullet_x;
+        static $options = [];
+        
+        $override = [];
+        
+        switch ($info['status']) {
+            case 'prepare_start':
+                if (!isset($this->callback['bullet']) && !isset($this->prep_callback['bullet'])) {
+                    if(isset($info['p'])) {
+                        $options = assignment_to_array($info['p']);
+                    }
+                    $font_size = $this->GetFontSize();
+                    // ?????
+                    $psize = $options['point_size'] ?? $font_size/2.5;
+                    $padding = $options['padding'] ?? $font_size * 0.7;
+                    $margin = $options['margin'] ?? 20;
+
+                    $xpos = $info['x'];
+
+                    // Store left side of bullet (returns right by default)
+                    $saved_bullet_x = $this->ezBullet(['aleft' => $xpos + $margin ] + $options, true /*test*/) - $psize;//$info['x'];
+
+                    // store text position
+                    $saved_x = $saved_bullet_x + $psize + $padding;
+                }
+                // text position
+                $override['x'] = $saved_x;
+                break;
+            case 'start':
+                //$font_size = $this->GetFontSize();
+                $override['x'] = $saved_x;
+                // this is not the first line
+                if (empty($this->callback['bullet'])) {
+                    $h = $this->getFontHeight($this->GetFontSize()) * 0.95;
+                    $y = $this->getY();
+                    $this->ezSetY( $y + $h);
+                    if(isset($options['point_color']) && !is_array($options['point_color'])) {
+                        $options['point_color'] = explode('#', $options['point_color']);
+                    }
+                    $this->ezBullet($options + ['aleft' => $saved_bullet_x]);
+
+                    $this->ezSetY($y);
+                }
+                break;
+            case 'end':
+                // this is the last line
+                if (empty($this->callback['bullet'])) {
+                    $h = $this->getFontHeight($this->GetFontSize());
+                    $sepFactor = isset($options['line_space']) ? $options['line_space'] : 0.2;
+                    $this->ezSetY($this->getY() - 2*$h*$sepFactor);
+                    $options = [];
+                }
+                break;
+        }
+
+        return $override;
     }
 }
