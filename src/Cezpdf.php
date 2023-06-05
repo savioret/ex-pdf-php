@@ -2508,11 +2508,12 @@ class Cezpdf extends Cpdf
         $this->addTextYOffset = $yOffset;
         
         if ($yOffset) {
-            $height = $yOffset;// - $this->getFontHeight($this->addTextOrigSize);
-            // out of page, then dont displace ?? TODO:review
+            $height = $yOffset;
+            // out of page
             if ($y - $yOffset < $this->ez['bottomMargin']) {
                 // then make a new page
-               // $this->ezNewPage();
+                $this->ezNewPage();
+                $y = $this->y - $yOffset;
             }
             else {
                 $y -= $yOffset - $this->getFontHeight($this->addTextOrigSize);

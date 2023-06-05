@@ -62,11 +62,12 @@ $pdf->ezTable($data, '', '', [
     ]
 ]);
 
+$txt = '';
 for ($x = 3; $x < 70; $x++) {
-    $txt2 .= "<c:fontsize:$x>Font$x</c:fontsize>size ";
+    $txt .= "<c:fontsize:$x>Font$x</c:fontsize>size ";
 }
 
-$pdf->ezText($txt2);
+$pdf->ezText($txt);
 
 
 if (isset($_GET['d']) && $_GET['d']) {
