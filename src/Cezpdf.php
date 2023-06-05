@@ -1763,6 +1763,17 @@ class Cezpdf extends Cpdf
                             } else {
                                 $lines = [];
                             }
+
+                            // ---- apply leading and spacing options ---
+                            if (isset($options['cols'][$colName]['leading'])) { // use leading instead of spacing
+                                $height = $options['cols'][$colName]['leading'];
+                            } elseif (isset($options['cols'][$colName]['spacing'])) {
+                                $height = $this->getFontHeight($options['fontSize']) * $options['cols'][$colName]['spacing'];
+                            } else {
+                                $height = $this->getFontHeight($options['fontSize']);
+                            }
+                            // ------------------------------------------
+
                             $this->y -= $options['rowGap'];
                             foreach ($lines as $line) {
                                 $line = $this->ezProcessText($line);
