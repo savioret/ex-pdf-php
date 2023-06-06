@@ -370,7 +370,7 @@ class Cezpdf extends Cpdf
         $this->setBackground();
 
         // extend allowed tags
-        $this->allowedTags .= '|bullet:?.*?|indent:?[0-9]*|fontsize:?[0-9]*|image:?.*?';
+        $this->allowedTags .= '|bullet:?.*?|indent:?[0-9]*|fontsize:?[0-9]*|image:?.*?|showimage:?.*?';
     }
 
     /**
@@ -2766,7 +2766,31 @@ class Cezpdf extends Cpdf
         return $override;
     }
 
-
+    /**
+     * Callback to display inline images within text
+     *
+     * syntax for the image tag:
+     *   <C:image:<filename> <opt. width> <opt. height>>
+     *
+     * it is possible to specify the image width without specifying the image height
+     * (the image will be scaled to the appropriate height).
+     *
+     * Supported filename in the image tag:
+     *   '<C:showimage:'.urlencode('http://myserver.mytld/myimage.png').'>'
+     *   '<C:showimage:'.urlencode('/home/my home/my image.png').'>'
+     * the url encoding is required for:
+     *  - files from remote servers (first entry from above)
+     *  - local files with whitespaces in the directory or file names
+     *
+     * local files without whitespaces in their filename can be specified without
+     * url encoding:
+     *
+     * '<C:showimage:/home/myhome/myimage.png>'
+     *
+     * the php gd2 extension must be enabled for remote files and local gif files.
+     * local png- and jpeg-files are supported without the gd2 extension.
+     * @return array override information
+     */
     public function image(&$info)
     {
         $override = []; // overriden data
@@ -2775,23 +2799,29 @@ class Cezpdf extends Cpdf
         switch ($info['status']) {
             case 'prepare_start':
 
-                $opts = explode(",", $info['p']);
+                $opts = preg_split('/[, ]+/', trim($info['p']));
 
                 // Set available width if nothing passed
                 if (empty($opts[1])) {
                     $opts[1] = $info['orgWidth'];
                 }
+                $opts[0] = urldecode($opts[0]);
 
-                // TODO: sobra el if ????
                 if (!isset($this->callback['image']) && !isset($this->prep_callback['image'])) {
                     $info['saved_x'] = $info['x'];
 
                     $imageInfo = getimagesize($opts[0]);
                     $width = $imageInfo[0];
                     $height = $imageInfo[1];
-                    $ratio = $width / $height;
                     $width_in_page = min($info['orgWidth']-1, $opts[1]);
-                    $info['image_height'] = $width_in_page / $ratio;
+                    $info['image_width'] = $width_in_page;
+                    if (isset($opts[2])) {
+                        $info['image_height'] = $opts[2];
+                    } else {
+                        $ratio = $width / $height;
+                        $info['image_height'] = $width_in_page / $ratio;
+                    }
+                    $info['image_type'] = $imageInfo[2];
                 }
 
                 $override['x'] = $info['x'] +  min($info['orgWidth']-1, $opts[1]);
@@ -2800,15 +2830,15 @@ class Cezpdf extends Cpdf
 
             case 'start':
                 
-                $opts = explode(",", $info['p']);
+                $opts = preg_split('/[, ]+/', trim($info['p']));
                 
                 // Set available width if nothing passed
                 if (empty($opts[1])) {
                     $opts[1] = $info['orgWidth'];
                 }
+                $opts[0] = urldecode($opts[0]);
 
-                $image_width = min($info['orgWidth']-1, $opts[1]);
-                $override['x'] = $info['saved_x'] + $image_width;
+                $override['x'] = $info['saved_x'] + $info['image_height'];//$image_width;
                 $override['height'] = $info['image_height'];
 
                 $y = $this->y;
@@ -2817,16 +2847,37 @@ class Cezpdf extends Cpdf
                 $this->ez['leftMargin'] = $info['saved_x'];
 
                 // draw only if it fits on the remaining space
-                if ( $image_width < $info['orgWidth']) {
-                    $this->ezImage(
-                        $opts[0],
-                        0, // pad
-                        $image_width,
-                        'none', // resize
-                        'left', // just
-                        0, // angle
-                        '' // border
-                    );
+                if ( $info['image_width'] < $info['orgWidth']) {
+
+                    if (substr($opts[0], 0, 5) == 'http:' || substr($opts[0], 0, 6) == 'https:') {
+                        if (function_exists('imagecreatefrompng')) {
+                            switch ($info['image_type']) {
+                                case 3: // png
+                                    $image = imagecreatefrompng($opts[0]);
+                                    break;
+                                case 2: // jpeg
+                                    $image = imagecreatefromjpeg($opts[0]);
+                                    break;
+                                case 1: // gif
+                                    $image = imagecreatefromgif($opts[0]);
+                                    break;
+                            }
+                            $this->addImage($image, $info['x']-$info['image_width'], $this->y - $info['image_height'], $info['image_width'], $info['image_height']);
+                        }
+                    }
+                    else {
+                        switch ($info['image_type']) {
+                            case 3: // png
+                                parent::addPngFromFile($opts[0], $info['x']-$info['image_width'], $this->y - $info['image_height'], $info['image_width'], $info['image_height']);
+                                break;
+                            case 2: // jpeg
+                                parent::addJpegFromFile($opts[0], $info['x']-$info['image_width'], $this->y - $info['image_height'], $info['image_width'], $info['image_height']);
+                                break;
+                            case 1: // gif
+                                parent::addGifFromFile($opts[0], $info['x']-$info['image_width'], $this->y - $info['image_height'], $info['image_width'], $info['image_height']);
+                                break;
+                        }
+                    }
                     $this->ez['leftMargin'] = $m;
                 }
                 $this->y = $y;
@@ -2834,6 +2885,15 @@ class Cezpdf extends Cpdf
         }
 
         return $override;
+    }
+
+
+    /**
+     * @see image
+     */
+    public function showimage(&$info)
+    {
+        return $this->image($info);
     }
 
 
