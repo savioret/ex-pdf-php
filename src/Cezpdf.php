@@ -685,7 +685,7 @@ class Cezpdf extends Cpdf
      * Get the current Y position in the codument
      * @return float
      */
-    public function ezGetY() : float
+    public function ezGetY()
     {
         return $this->y;
     }
@@ -2249,15 +2249,15 @@ class Cezpdf extends Cpdf
      *   'aleft' => 40, // posicion absoluta independientemente del margen
      *   'point_color' => [1, 1, 0], // color del bullet
      * @param bool $test
-     * @return float|int
+     * @return float
      */
-    public function ezBullet($options, $test=false) : float
+    public function ezBullet($options, $test=false)
     {
-        $pcolor = $options['point_color'] ?? null;
-        $shape = $options['shape'] ?? 'circle';
+        $pcolor = isset($options['point_color']) ? $options['point_color'] : null;
+        $shape = isset($options['shape']) ? $options['shape'] : 'circle';
         $font_size = $this->GetFontSize();
-        $psize = $options['point_size'] ?? $font_size/2.5;
-        $margin = $options['margin'] ?? 20;
+        $psize = isset($options['point_size']) ? $options['point_size'] : $font_size/2.5;
+        $margin = isset($options['margin']) ? $options['margin'] : 20;
 
         $point_pos = $this->leftMargin() + $margin;
         if(isset($options['aleft'])) {
@@ -2825,7 +2825,7 @@ class Cezpdf extends Cpdf
                         'none', // resize
                         'left', // just
                         0, // angle
-                        '', // border
+                        '' // border
                     );
                     $this->ez['leftMargin'] = $m;
                 }
@@ -2863,9 +2863,9 @@ class Cezpdf extends Cpdf
                     }
                     $font_size = $this->GetFontSize();
                     // ?????
-                    $psize = $options['point_size'] ?? $font_size/2.5;
-                    $padding = $options['padding'] ?? $font_size * 0.7;
-                    $margin = $options['margin'] ?? 20;
+                    $psize = isset($options['point_size']) ? $options['point_size'] : $font_size/2.5;
+                    $padding = isset($options['padding']) ? $options['padding'] : $font_size * 0.7;
+                    $margin = isset($options['margin']) ? $options['margin'] : 20;
 
                     $xpos = $info['x'];
 
