@@ -17,7 +17,8 @@ $pdf->ezText($txt);
 $pdf->ezText("\n<b>Using text spacing:</b>");
 $pdf->ezText($txt, 0 , ['spacing' => 5]);
 
-$pdf->ezText("\n<b>Change size inside a table:</b>");
+$pdf->ezNewPage();
+$pdf->ezText("\n<b>Change size inside a table, using text spacing:</b>");
 $tableprops = [
     'rowGap' => 0,
     'colGap' => 0,
@@ -29,13 +30,12 @@ $pdf->ezTable(
         $data,
         '',
         '',
-        $tableprops + ['width' => contentWidth, 'cols' => [['spacing' => 5,'justification'=>'full']]]
+        $tableprops + ['width' => $contentWidth, 'cols' => [['spacing' => 3,'justification'=>'full']]]
     );
 
 
 $txt2 = "This isj text to show how <c:fontsize:80>full justification</c:fontsize> <c:fontsize:7>  behaves in a paragraph.</c:fontsize>The expected behavior is that the first and the last lines are not fully aligned. This is text to show how full justification behaves in a paragraph. The expected behavior is that the first and the last lines are not fully aligned.";
-
-$pdf->ezText("\n<b>Changing size of table headers:</b>");
+$pdf->ezText("\n\n<b>Changing size of table headers:</b>\n");
 
 $data = [
     ['<c:fontsize:30>numg</c:fontsize>' => 1, 'name' => 'gandalf', 'type' => 'wizard']
@@ -62,8 +62,11 @@ $pdf->ezTable($data, '', '', [
     ]
 ]);
 
+
+$pdf->ezNewPage();
+
 $txt = '';
-for ($x = 3; $x < 70; $x++) {
+for ($x = 3; $x < 62; $x++) {
     $txt .= "<c:fontsize:$x>Font$x</c:fontsize>size ";
 }
 
