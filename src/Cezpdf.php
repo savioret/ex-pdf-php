@@ -2255,18 +2255,18 @@ class Cezpdf extends Cpdf
     {
         $pcolor = isset($options['point_color']) ? $options['point_color'] : null;
         $shape = isset($options['shape']) ? $options['shape'] : 'circle';
-        $font_size = $this->GetFontSize();
+        $font_size = $this->ezGetFontSize();
         $psize = isset($options['point_size']) ? $options['point_size'] : $font_size/2.5;
         $margin = isset($options['margin']) ? $options['margin'] : 20;
 
-        $point_pos = $this->leftMargin() + $margin;
+        $point_pos = $this->ezLeftMargin() + $margin;
         if(isset($options['aleft'])) {
             // absolute pos
             $point_pos = $options['aleft'];
         }
         elseif (isset($options['margin']) ) {
             // relative to left margin
-            $point_pos = $this->leftMargin() + $options['margin'];
+            $point_pos = $this->ezLeftMargin() + $options['margin'];
         }
 
         
@@ -2292,7 +2292,7 @@ class Cezpdf extends Cpdf
             $height = $fontHeight * $options['spacing'];
         }
 
-        $ypos = $this->GetY() - $height + $fontHeight/2.4;
+        $ypos = $this->ezGetY() - $height + $fontHeight/2.4;
         //$this->ezDrawHLine(1.0, $ypos);
         switch ($shape) {
             default:
@@ -2549,6 +2549,18 @@ class Cezpdf extends Cpdf
         $this->addTextMaxHeight = $this->addTextMaxSize = 0;
     }
 
+
+    function parseCallbackArgs(string $text, $sep=',') : array
+    {
+        $values = [];
+        $items = explode($sep, $text);
+        foreach($items as $item) {
+            $pair = explode('=', $item);
+            $values[trim($pair[0])] = trim($pair[1]);
+        }
+
+        return $values;
+    }
 
     /**
      * callback function for internal links.
@@ -2919,9 +2931,9 @@ class Cezpdf extends Cpdf
             case 'prepare_start':
                 if (!isset($this->callback['bullet']) && !isset($this->prep_callback['bullet'])) {
                     if(isset($info['p'])) {
-                        $options = assignment_to_array($info['p']);
+                        $options = $this->parseCallbackArgs($info['p']);
                     }
-                    $font_size = $this->GetFontSize();
+                    $font_size = $this->ezGetFontSize();
                     // ?????
                     $psize = isset($options['point_size']) ? $options['point_size'] : $font_size/2.5;
                     $padding = isset($options['padding']) ? $options['padding'] : $font_size * 0.7;
@@ -2943,8 +2955,8 @@ class Cezpdf extends Cpdf
                 $override['x'] = $saved_x;
                 // this is not the first line
                 if (empty($this->callback['bullet'])) {
-                    $h = $this->getFontHeight($this->GetFontSize()) * 0.95;
-                    $y = $this->getY();
+                    $h = $this->getFontHeight($this->ezGetFontSize()) * 0.95;
+                    $y = $this->ezGetY();
                     $this->ezSetY( $y + $h);
                     if(isset($options['point_color']) && !is_array($options['point_color'])) {
                         $options['point_color'] = explode('#', $options['point_color']);
@@ -2957,9 +2969,9 @@ class Cezpdf extends Cpdf
             case 'end':
                 // this is the last line
                 if (empty($this->callback['bullet'])) {
-                    $h = $this->getFontHeight($this->GetFontSize());
+                    $h = $this->getFontHeight($this->ezGetFontSize());
                     $sepFactor = isset($options['line_space']) ? $options['line_space'] : 0.2;
-                    $this->ezSetY($this->getY() - 2*$h*$sepFactor);
+                    $this->ezSetY($this->ezGetY() - 2*$h*$sepFactor);
                     $options = [];
                 }
                 break;
