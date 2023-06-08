@@ -1,4 +1,6 @@
 .DS_Store
+.php_cs.cache
+TAGS
 vendor
 tests/out
 
@@ -7,3 +9,6 @@ tests/out
 
 *.phar
 *.log
+*.orig
+*.diff
+*~
