@@ -5,12 +5,35 @@ use PHPUnit\Framework\TestCase;
 class CpdfRenderTest extends TestCase
 {
     private $output;
-    private $outDir = 'tests/out';
 
+    /**
+     * Current test generated directory
+     * @var string
+     */
+    private $outDir;
+
+    /**
+     * Reference data directory to compare with
+     * @var string
+     */
+    private $refDir;
+
+    /**
+     * Current file directory path
+     * @var string
+     */
     private $dirPath = '';
 
+    /**
+     * ImageMagick binary path
+     * @var string
+     */
     private $magick;
 
+    /**
+     * Ghostscript binary path
+     * @var string
+     */
     private $gs;
 
     public function __construct()
@@ -20,9 +43,11 @@ class CpdfRenderTest extends TestCase
         $this->dirPath = dirname(__FILE__);
         print "\ndirpath:" . $this->dirPath;
         $this->outDir = $this->dirPath . '/out';
-        if (!is_dir( $this->outDir )) {
-            mkdir( $this->outDir );
-        }
+        $this->refDir = $this->dirPath . '/ref';
+        
+        $this->ensureDir($this->outDir);
+        $this->ensureDir($this->refDir);
+        $this->ensureDir($this->outDir.'/ref');
 
 
         $this->magick = $this->getImageMagickBin();
@@ -32,6 +57,12 @@ class CpdfRenderTest extends TestCase
         $this->assertTrue(file_exists($this->magick), "GhostScript binary does not exists ( got:$this->gs )");
     }
 
+    public function ensureDir($path)
+    {
+        if (!is_dir( $path )) {
+            mkdir( $path );
+        }
+    }
 
     public function locateSystemBinary($name) {
         $binary = null;
@@ -93,7 +124,7 @@ class CpdfRenderTest extends TestCase
         //$command = $this->magick . " -density 300 -depth 8 -quality 85 \"{$pdfFile}\" \"$destFile\"";
     
         // Prepare the Ghostscript command
-        $command = $this->gs ." -dBATCH -dNOPAUSE -sDEVICE=pngalpha -dTextAlphaBits=1 -dGraphicsAlphaBits=1 -o \"{$destFile}\" -r300 \"{$pdfFile}\"";
+        $command = $this->gs ." -dBATCH -dNOPAUSE -sDEVICE=pngalpha -dTextAlphaBits=1 -dGraphicsAlphaBits=1 -o ".escapeshellarg($destFile) ." -r300 ".escapeshellarg($pdfFile)."";
 
         // Execute the shell command
         $shellOutput = $this->executeShellCommand($command, $shellRet);
@@ -131,46 +162,101 @@ class CpdfRenderTest extends TestCase
         }
     }
 
+    public function replaceExtension($file, $ext) 
+    {
+        $fname = pathinfo($file, PATHINFO_FILENAME);
+        $path = dirname($file);
+
+        $newFile = $fname . '.' . $ext;
+        if($path) {
+            $newFile = $path . '/' . $newFile;
+        }
+
+        return $newFile;
+    }
+
+    public function compareImages($imageFile1, $imageFile2, $diffFile) {
+        // Shell command to compare images using ImageMagick
+        $command = $this->magick . " compare -metric RMSE \"{$imageFile1}\" \"{$imageFile2}\" \"$diffFile\" 2>&1";
+        
+        // Execute the shell command and capture the output
+        exec($command, $output, $returnCode);
+
+        // Check if the command execution was successful
+        if ($returnCode === 0) {
+            // Parse the output to extract the comparison result
+            $result = explode(" ", $output[0]);
+            $rating = (float) $result[0];
+
+            // Return the rating
+            return $rating;
+        } else {
+            // Return an error code or handle the failure accordingly
+            return -1;
+        }
+    }
+
     public function runPdfScript($scriptFilepath, $outFile) 
     {
         $phpExec = PHP_BINARY;
         chdir(dirname($scriptFilepath));
 
         $err = "";
-        $output = $this->executeShellCommand("$phpExec $scriptFilepath 2>&1", $err, $outFile);
+        $output = $this->executeShellCommand("$phpExec ".escapeshellarg($scriptFilepath)." 2>&1", $err, $outFile);
 
         // ??? move this out
         $this->assertEquals($err, 0, "The shell command returned an error:\n".file_get_contents($scriptFilepath));
     }
 
+    public function scanDirectory($folder, $extension)
+    {
+        $files = scandir($folder);
+        $paths = [];
+        foreach ($files as $file) {
+            $filePath = $folder . '/' . $file;
+            if (is_file($filePath) && pathinfo($filePath, PATHINFO_EXTENSION) === $extension) {
+                $paths[basename($filePath)] = $filePath;
+            }
+        }
+
+        return $paths;
+    }
+
     public function rasterizePdfs($srcFolder, $dstFolder)
     {
-        $files = scandir($srcFolder);
+        $files = $this->scanDirectory($srcFolder, 'pdf');
         echo "\nScanning $srcFolder for PDF files\n";
         foreach ($files as $file) {
-            $filePath = $srcFolder . '/' . $file;
-            if (is_file($filePath) && pathinfo($filePath, PATHINFO_EXTENSION) === 'pdf') {
-                echo "Converting $file into png\n";
-                $err ='';
-                $this->convertPdfToPng($filePath, $dstFolder, $err);
-            }
+            echo "Converting $file into png\n";
+            $err ='';
+            $this->convertPdfToPng($file, $dstFolder, $err);
         }
     }
 
     public function generatePdfs($srcFolder, $dstFolder)
     {
         chdir($srcFolder);
-        $files = scandir($srcFolder);
+        $files = $this->scanDirectory($srcFolder, 'php');
         echo "\nScanning $srcFolder for script generation files\n";
         foreach ($files as $file) {
-            $filePath = $srcFolder . '/' . $file;
-            if (is_file($filePath) && pathinfo($filePath, PATHINFO_EXTENSION) === 'php') {
-                echo "Generating PDF script $file\n";
-                $err ='';
+            echo "Generating PDF script $file\n";
+            $pdfFilepath = $this->replaceExtension($file, 'pdf');
+            $dstFilepath = $dstFolder . '/' . basename($pdfFilepath);
+            $this->runPdfScript($file, $dstFilepath);
+        }
+    }
 
-                $dstFilename = pathinfo($filePath, PATHINFO_FILENAME);
-                $dstFilepath = $dstFolder . '/' . $dstFilename . '.pdf';
-                $this->runPdfScript($filePath, $dstFilepath);
+    public function compareDirectories($srcFolder, $dstFolder)
+    {
+        $srcFiles = $this->scanDirectory($srcFolder, 'png');
+        $dstFiles = $this->scanDirectory($dstFolder, 'png');
+        echo "\nScanning $srcFolder for PDF files\n";
+        foreach ($srcFiles as $fname=>$file) {
+            if (isset($dstFiles[$fname])) {
+                $diff = $this->replaceExtension($dstFiles[$fname], 'diff.png');
+                $rating = $this->compareImages($file, $dstFiles[$fname], $diff);
+
+                $this->assertEquals($rating, 0, "Comparison of $file and {$dstFiles[$fname]} failed");
             }
         }
     }
@@ -181,9 +267,23 @@ class CpdfRenderTest extends TestCase
     public function test_Examples()
     {
         print "Current directory:" . getcwd();
+
+        $scriptsDir = $this->dirPath . '/../examples0';
         
-        $this->generatePdfs($this->dirPath.'/../examples', $this->outDir);
+        // Generate reference PDFs
+        $this->generatePdfs($scriptsDir, $this->refDir);
+
+        // Generate reference PNGs
+        $this->rasterizePdfs($this->refDir, $this->outDir."/ref");
+
+        
+        // Generate test PDFs
+        $this->generatePdfs($scriptsDir, $this->outDir);
+
+        // Generate test PNGs
         $this->rasterizePdfs($this->outDir, $this->outDir);
+
+        $this->compareDirectories($this->outDir . "/ref", $this->outDir);
 
         // chdir($this->dirPath.'/../examples');
         // $outFile = "{$this->outDir}/columns.pdf";
