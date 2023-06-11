@@ -7,11 +7,12 @@ include 'Cezpdf.php';
 
 class Creport extends Cezpdf
 {
-    public function Creport($p, $o)
+    public function __construct($p, $o)
     {
         $this->__construct($p, $o, 'none', []);
     }
 }
+
 $pdf = new Creport('a4', 'portrait');
 
 // IMPORTANT: In version >= 0.12.0 it is required to allow custom tags (by using $pdf->allowedTags) before using it
