@@ -368,8 +368,9 @@ class TTFsubset
         }
         for ($i = 0; $i < strlen($chars); $i += 2) {
             $charCode = self::ORD(substr($chars, $i, 2));
-            $orgIndex = TTF::characterToIndex($unicodeEncodingTable, $charCode);
-            $description = ($orgIndex > -1) ? $this->glyf[$orgIndex] : null;
+            // Ensure to always get a valid index
+            $orgIndex = max(0, TTF::characterToIndex($unicodeEncodingTable, $charCode));
+            $description = $this->glyf[$orgIndex];
             if (!$this->orgIndexAlreadyExists($orgIndex)) {
                 $this->TTFchars[] = new TTFchar($charCode, $orgIndex, 0, $description);
             }
