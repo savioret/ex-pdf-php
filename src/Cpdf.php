@@ -2839,13 +2839,11 @@ class Cpdf
      */
     protected function beforeAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $orgWidth, &$height, &$justification, &$angle, &$wordSpaceAdjust, $test)
     {
-
     }
 
 
     protected function afterAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $height, &$justification, &$angle, &$wordSpaceAdjust, $test)
     {
-
     }
 
 
@@ -2885,7 +2883,7 @@ class Cpdf
         $info['width'] = $width;
         $info['size'] = $size;
         $override = $this->{$info['func']}($info);
-        if($override) {
+        if ($override) {
             if (isset($override['x'])) {
                 $width -= $override['x'] - $x;
                 $x = $override['x'];
@@ -2895,7 +2893,7 @@ class Cpdf
                 $size = $override['size'];
             }
 
-            foreach($override as $k=>$v) {
+            foreach ($override as $k => $v) {
                 $info[$k] = $v;
             }
         }
@@ -3056,9 +3054,8 @@ class Cpdf
                 if (!$isCustom) {
                     $this->defaultFormatting($info);
                     $this->setCurrentFont();
-                }
-                else {
-                    $this->processPrepareCallback( $isEnd, $info, $x, $y, $size, $width );
+                } else {
+                    $this->processPrepareCallback($isEnd, $info, $x, $y, $size, $width);
 
                     // update global callback
                     if (!$isEnd && !$info['noClose']) {
@@ -3068,7 +3065,7 @@ class Cpdf
                     }
 
                     // edge case
-                    if($width < 0) {
+                    if ($width < 0) {
                         $text = mb_substr($text, $p, null, 'UTF-8');
                         // TODO: call getTextLength again ?
                         array_push($result, ['text' => $part, 'nspaces' => $textLength[4], 'callback' => null]);
@@ -3185,8 +3182,8 @@ class Cpdf
             return $v['text'];
         }, $parts));
 
-        if (($justification == 'full' && ($orgWidth / 100 * 90) < ($orgWidth - $width)) || $justification != 'full'){
-        	$this->adjustWrapText($parsedText, $orgWidth - $width, $orgWidth, $x, $wordSpaceAdjust, $justification);
+        if (($justification == 'full' && ($orgWidth / 100 * 90) < ($orgWidth - $width)) || $justification != 'full') {
+            $this->adjustWrapText($parsedText, $orgWidth - $width, $orgWidth, $x, $wordSpaceAdjust, $justification);
         }
 
         if ($test) {

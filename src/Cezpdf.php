@@ -1555,7 +1555,7 @@ class Cezpdf extends Cpdf
                     $this->y -= $this->getFontHeight($options['titleFontSize']);
                 }
                 $lineHeight = $orgHeight;
-                $this->addTextEx($middle - $w / 2, $this->y, $options['titleFontSize'], $title, 0 ,$lineHeight);
+                $this->addTextEx($middle - $w / 2, $this->y, $options['titleFontSize'], $title, 0, $lineHeight);
                 $this->y -= $options['titleGap'] + $lineHeight-$orgHeight;
             }
             // margins may have changed on the newpage
@@ -2029,7 +2029,7 @@ class Cezpdf extends Cpdf
         // modifications to give leading and spacing based on those given by Craig Heydenburg 1/1/02
         if (is_array($options) && isset($options['leading'])) { //# use leading instead of spacing
             $height = $options['leading'];
-            $padding = max (0, $height - $fontHeight);
+            $padding = max(0, $height - $fontHeight);
         } elseif (is_array($options) && isset($options['spacing'])) {
             $height = $fontHeight * $options['spacing'];
             $padding = $height - $fontHeight;
@@ -2076,7 +2076,7 @@ class Cezpdf extends Cpdf
                     }
                 }
                 $lineHeight = $height;
-                $line = $this->addTextEx($left, $this->y, $size, $line, $right - $left,  $lineHeight, $just, 0, 0, $test);
+                $line = $this->addTextEx($left, $this->y, $size, $line, $right - $left, $lineHeight, $just, 0, 0, $test);
                 $dy = 0;
                 if ($padding && $lineHeight != $orgHeight) {
                     $dy = $padding;
@@ -2251,7 +2251,7 @@ class Cezpdf extends Cpdf
      * @param bool $test
      * @return float
      */
-    public function ezBullet($options, $test=false)
+    public function ezBullet($options, $test = false)
     {
         $pcolor = isset($options['point_color']) ? $options['point_color'] : null;
         $shape = isset($options['shape']) ? $options['shape'] : 'circle';
@@ -2260,18 +2260,17 @@ class Cezpdf extends Cpdf
         $margin = isset($options['margin']) ? $options['margin'] : 20;
 
         $point_pos = $this->ezLeftMargin() + $margin;
-        if(isset($options['aleft'])) {
+        if (isset($options['aleft'])) {
             // absolute pos
             $point_pos = $options['aleft'];
-        }
-        elseif (isset($options['margin']) ) {
+        } elseif (isset($options['margin'])) {
             // relative to left margin
             $point_pos = $this->ezLeftMargin() + $options['margin'];
         }
 
         
 
-        if($test) {
+        if ($test) {
             return $point_pos + $psize;
         }
 
@@ -2288,7 +2287,7 @@ class Cezpdf extends Cpdf
         if (isset($options['leading'])) {
             // use leading instead of spacing even if defined both
             $height = $options['leading'];
-        } elseif (isset($options['spacing']) ) {
+        } elseif (isset($options['spacing'])) {
             $height = $fontHeight * $options['spacing'];
         }
 
@@ -2336,7 +2335,7 @@ class Cezpdf extends Cpdf
      * @see ezText for text options
      * @param string $txt text
      * @param string $size text size
-     * @param array $options text and bullet options (combined) 
+     * @param array $options text and bullet options (combined)
      * @return void
      */
     public function ezBulletText(string $txt, $size = '0', $options = [])
@@ -2345,14 +2344,14 @@ class Cezpdf extends Cpdf
         $bopts = array_filter_keys($options, ['point_size', 'margin', 'padding', 'shape', 'point_color', 'line_space']);
         $font_size = $size? $size : $this->ezGetFontSize();
 
-        foreach($bopts as $k=>$v) {
+        foreach ($bopts as $k => $v) {
             if (is_array($v)) {
                 $v = implode('#', $v);
             }
             $pairs[] = "$k=$v";
         }
         $bopts_str = '';
-        if(!empty($pairs)) {
+        if (!empty($pairs)) {
             $bopts_str = ':' . implode(',', $pairs);
         }
         $this->ezText("<c:bullet$bopts_str>$txt</c:bullet>", $size, $topts);
@@ -2505,14 +2504,15 @@ class Cezpdf extends Cpdf
         }
 
         $maxFontHeight = $this->getFontHeight($this->addTextMaxSize);
-        if($this->addTextMaxSize && $this->addTextMaxSize != $this->addTextOrigSize ) {
+        if ($this->addTextMaxSize && $this->addTextMaxSize != $this->addTextOrigSize) {
             $yOffset = $maxFontHeight;
         }
 
-        if (empty($this->addTextMaxSize))
+        if (empty($this->addTextMaxSize)) {
             $this->addTextMaxSize = $this->addTextOrigSize;
+        }
 
-        if ($this->addTextMaxHeight && $this->addTextMaxHeight > $height && $this->addTextMaxHeight > $maxFontHeight ) {
+        if ($this->addTextMaxHeight && $this->addTextMaxHeight > $height && $this->addTextMaxHeight > $maxFontHeight) {
             $yOffset = $this->addTextMaxHeight;
         }
 
@@ -2525,8 +2525,7 @@ class Cezpdf extends Cpdf
                 // then make a new page
                 $this->ezNewPage();
                 $y = $this->y - $yOffset;
-            }
-            else {
+            } else {
                 $y -= $yOffset - $this->getFontHeight($this->addTextOrigSize);
             }
         }
@@ -2550,11 +2549,11 @@ class Cezpdf extends Cpdf
     }
 
 
-    function parseCallbackArgs(string $text, $sep=',') : array
+    function parseCallbackArgs(string $text, $sep = ',') : array
     {
         $values = [];
         $items = explode($sep, $text);
-        foreach($items as $item) {
+        foreach ($items as $item) {
             $pair = explode('=', $item);
             $values[trim($pair[0])] = trim($pair[1]);
         }
@@ -2736,13 +2735,13 @@ class Cezpdf extends Cpdf
                     $saved_x = $info['x'];
                 }
                 //$indent = 20;
-                if(isset($info['p'])) {
+                if (isset($info['p'])) {
                     $indent = $info['p'];
                 }
                 $override['x'] = $saved_x + $indent;
                 break;
             case 'start':
-                if(isset($info['p'])) {
+                if (isset($info['p'])) {
                     $indent = $info['p'];
                 }
                 $override['x'] = $saved_x + $indent;
@@ -2810,7 +2809,6 @@ class Cezpdf extends Cpdf
 
         switch ($info['status']) {
             case 'prepare_start':
-
                 $opts = preg_split('/[, ]+/', trim($info['p']));
 
                 // Set available width if nothing passed
@@ -2841,7 +2839,6 @@ class Cezpdf extends Cpdf
                 break;
 
             case 'start':
-                
                 $opts = preg_split('/[, ]+/', trim($info['p']));
                 
                 // Set available width if nothing passed
@@ -2859,8 +2856,7 @@ class Cezpdf extends Cpdf
                 $this->ez['leftMargin'] = $info['saved_x'];
 
                 // draw only if it fits on the remaining space
-                if ( $info['image_width'] < $info['orgWidth']) {
-
+                if ($info['image_width'] < $info['orgWidth']) {
                     if (substr($opts[0], 0, 5) == 'http:' || substr($opts[0], 0, 6) == 'https:') {
                         if (function_exists('imagecreatefrompng')) {
                             switch ($info['image_type']) {
@@ -2876,8 +2872,7 @@ class Cezpdf extends Cpdf
                             }
                             $this->addImage($image, $info['x']-$info['image_width'], $this->y - $info['image_height'], $info['image_width'], $info['image_height']);
                         }
-                    }
-                    else {
+                    } else {
                         switch ($info['image_type']) {
                             case 3: // png
                                 parent::addPngFromFile($opts[0], $info['x']-$info['image_width'], $this->y - $info['image_height'], $info['image_width'], $info['image_height']);
@@ -2930,7 +2925,7 @@ class Cezpdf extends Cpdf
         switch ($info['status']) {
             case 'prepare_start':
                 if (!isset($this->callback['bullet']) && !isset($this->prep_callback['bullet'])) {
-                    if(isset($info['p'])) {
+                    if (isset($info['p'])) {
                         $options = $this->parseCallbackArgs($info['p']);
                     }
                     $font_size = $this->ezGetFontSize();
@@ -2957,8 +2952,8 @@ class Cezpdf extends Cpdf
                 if (empty($this->callback['bullet'])) {
                     $h = $this->getFontHeight($this->ezGetFontSize()) * 0.95;
                     $y = $this->ezGetY();
-                    $this->ezSetY( $y + $h);
-                    if(isset($options['point_color']) && !is_array($options['point_color'])) {
+                    $this->ezSetY($y + $h);
+                    if (isset($options['point_color']) && !is_array($options['point_color'])) {
                         $options['point_color'] = explode('#', $options['point_color']);
                     }
                     $this->ezBullet($options + ['aleft' => $saved_bullet_x]);

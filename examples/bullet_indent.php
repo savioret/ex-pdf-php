@@ -66,7 +66,8 @@ $pdf->ezText($txt3);
 $pdf->ezColumnsStop();
 
 
-$pdf->ezText("\n\n\n<b>Example showing text indentation</b>
+$pdf->ezText(
+    "\n\n\n<b>Example showing text indentation</b>
 
 <c:indent:100><u>Phasellus eu suscipit turpis</u>. Ut bibendum gravida lacus, sit amet blandit dolor porta rhoncus. Suspendisse et tempor augue, quis fermentum nulla. Cras diam nisi, porttitor eu lectus nec, vestibulum sagittis eros. Nam congue, urna accumsan eleifend porttitor, nunc odio convallis metus, sit amet euismod turpis orci vitae sem. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque egestas neque elit, quis fermentum ipsum ornare in. Maecenas accumsan dui diam, eget condimentum sapien efficitur sit amet. In hac habitasse platea dictumst. Nunc nunc ligula, scelerisque quis laoreet nec, sollicitudin eu nulla. Morbi interdum enim sed ultricies dictum. Vestibulum suscipit iaculis sapien ac imperdiet. Cras sed turpis quam. Aliquam ornare a sem ut consequat. In hac habitasse platea dictumst.
 
@@ -75,7 +76,9 @@ Maecenas orci metus, interdum vel risus aliquam, condimentum dignissim lectus. U
 <u>Phasellus eu suscipit turpis</u>. Ut bibendum gravida lacus, sit amet blandit dolor porta rhoncus. Suspendisse et tempor augue, quis fermentum nulla. Cras diam nisi, porttitor eu lectus nec, vestibulum sagittis eros. Nam congue, urna accumsan eleifend porttitor, nunc odio convallis metus, sit amet euismod turpis orci vitae sem. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque egestas neque elit, quis fermentum ipsum ornare in. Maecenas accumsan dui diam, eget condimentum sapien efficitur sit amet. In hac habitasse platea dictumst. Nunc nunc ligula, scelerisque quis laoreet nec, sollicitudin eu nulla. Morbi interdum enim sed ultricies dictum. Vestibulum suscipit iaculis sapien ac imperdiet. Cras sed turpis quam. Aliquam ornare a sem ut consequat. In hac habitasse platea dictumst.
 
 Maecenas orci metus, interdum vel risus aliquam, condimentum dignissim lectus. Ut sit amet vulputate massa. Praesent mollis commodo tortor, vitae scelerisque libero. Donec tincidunt tortor tortor, ac venenatis libero porttitor sed. Ut luctus, nisl ut rutrum pretium, nisl sem gravida nisi, nec tristique neque risus sollicitudin mauris. Praesent elit lectus, molestie sit amet diam at, sollicitudin varius dui. In congue luctus nisi, at dictum mauris convallis vel. Aenean nec varius risus, et convallis erat. Morbi ac ipsum volutpat, aliquam libero vitae, faucibus elit. Ut dapibus dolor sed aliquam condimentum.",
-0, ['justification' => 'full']);
+    0,
+    ['justification' => 'full']
+);
 
 
 if (isset($_GET['d']) && $_GET['d']) {
