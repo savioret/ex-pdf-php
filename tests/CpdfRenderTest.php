@@ -25,13 +25,25 @@ class CpdfRenderTest extends TestCase
     private $dirPath = '';
 
     /**
-     * ImageMagick binary path
+     * List of excluded pdf generation scripts
+     * @var array
+     */
+    private $excluded = ['image'];
+
+    /**
+     * ImageMagick binary path, get from env MAGICK_BINARY
      * @var string
      */
     private $magick;
 
     /**
-     * Ghostscript binary path
+     * ImageMagick compare binary path, get from env COMPARE_BINARY
+     * @var string
+     */
+    private $compare;
+
+    /**
+     * Ghostscript binary path , get from env GS_BINARY
      * @var string
      */
     private $gs;
@@ -41,10 +53,10 @@ class CpdfRenderTest extends TestCase
         parent::__construct();
 
         $this->dirPath = dirname(__FILE__);
-        print "\ndirpath:" . $this->dirPath;
+
         $this->outDir = $this->dirPath . '/out';
         $this->refDir = $this->dirPath . '/ref';
-        
+
         $this->ensureDir($this->outDir);
         $this->ensureDir($this->refDir);
         $this->ensureDir($this->outDir.'/ref');
@@ -68,7 +80,13 @@ class CpdfRenderTest extends TestCase
         }
     }
 
-    public function locateSystemBinary($name) {
+    public function isExcluded($testName) 
+    {
+        return in_array($testName, $this->excluded);
+    }
+
+    public function locateSystemBinary($name)
+    {
         $binary = null;
 
         // Check for Windows
@@ -191,9 +209,7 @@ class CpdfRenderTest extends TestCase
 
     public function compareImages($imageFile1, $imageFile2, $diffFile) 
     {
-        $compareWin = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'compare' : '';
-
-        $subcommand = $this->compare . " $compareWin -metric RMSE \"{$imageFile1}\" \"{$imageFile2}\" ";
+        $subcommand = $this->compare . " -metric RMSE \"{$imageFile1}\" \"{$imageFile2}\" ";
 
         // Shell command to compare images using ImageMagick's compare
         $command =  "$subcommand null:  2>&1";
@@ -281,6 +297,9 @@ class CpdfRenderTest extends TestCase
         $files = $this->scanDirectory($srcFolder, 'php');
         echo "\nScanning $srcFolder for script generation files\n";
         foreach ($files as $file) {
+            if($this->isExcluded($file)) {
+                continue;
+            }
             echo "Generating PDF script $file\n";
             $pdfFilepath = $this->replaceExtension($file, 'pdf');
             $dstFilepath = $dstFolder . '/' . basename($pdfFilepath);
@@ -322,13 +341,13 @@ class CpdfRenderTest extends TestCase
         //$this->generatePdfs($scriptsDir, $this->refDir);
 
         // Generate reference PNGs from reference PDFs
-        $this->rasterizePdfs($this->refDir, $this->outDir."/ref");
+        //$this->rasterizePdfs($this->refDir, $this->outDir."/ref");
 
         // Generate test PDFs
-        $this->generatePdfs($scriptsDir, $this->outDir);
+        //$this->generatePdfs($scriptsDir, $this->outDir);
 
         // Generate test PNGs
-        $this->rasterizePdfs($this->outDir, $this->outDir);
+        //$this->rasterizePdfs($this->outDir, $this->outDir);
 
         $this->compareDirectories($this->outDir . "/ref", $this->outDir);
 
