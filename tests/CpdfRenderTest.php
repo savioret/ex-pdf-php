@@ -51,10 +51,14 @@ class CpdfRenderTest extends TestCase
 
 
         $this->magick = $this->getImageMagickBin();
-        $this->assertTrue(file_exists($this->magick), "ImageMagick binary does not exists ( got:$this->magick )");
+        $this->assertTrue(file_exists($this->magick), "ImageMagick binary does not exist ( got:$this->magick )");
+
+        $this->compare = $this->getCompareBin();
+        $this->assertTrue(file_exists($this->compare), "ImageMagick compare binary does not exist ( got:$this->compare )");
+
 
         $this->gs = $this->getGhostScriptBin();
-        $this->assertTrue(file_exists($this->magick), "GhostScript binary does not exists ( got:$this->gs )");
+        $this->assertTrue(file_exists($this->gs), "GhostScript binary does not exist ( got:$this->gs )");
     }
 
     public function ensureDir($path)
@@ -100,6 +104,15 @@ class CpdfRenderTest extends TestCase
         return $magick;
     }
 
+    public function getCompareBin() {
+        $compare = getenv('CONVERT_BINARY');
+        if (empty($compare)) {
+            $compare = $this->locateSystemBinary('compare');
+        }
+
+        return $compare;
+    }
+
     public function getGhostScriptBin() {
         $gs = getenv('GS_BINARY');
         if (empty($gs)) {
@@ -140,7 +153,7 @@ class CpdfRenderTest extends TestCase
         $returnValue = 0;
 
         if ($outputFile) {
-            $redir = " > $outputFile";
+            $redir = " > \"$outputFile\"";
         }
             
         // Always redirect error into stdout
@@ -153,12 +166,13 @@ class CpdfRenderTest extends TestCase
             return implode(PHP_EOL, $output);
         }
         else {
+            $outStr = implode("", $output);
             if ($outputFile) {
                 // Errors were stored within the file
-                return file_get_contents($outputFile);
+                return "$outStr\n".file_get_contents($outputFile);
             }
             else
-                return implode("", $output);
+                return $outStr;
         }
     }
 
@@ -175,18 +189,36 @@ class CpdfRenderTest extends TestCase
         return $newFile;
     }
 
-    public function compareImages($imageFile1, $imageFile2, $diffFile) {
-        // Shell command to compare images using ImageMagick
-        $command = $this->magick . " compare -metric RMSE  \"{$imageFile1}\" \"{$imageFile2}\" \"$diffFile\" ";
-        
+    public function compareImages($imageFile1, $imageFile2, $diffFile) 
+    {
+        $compareWin = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN' ? 'compare' : '';
+
+        $subcommand = $this->compare . " $compareWin -metric RMSE \"{$imageFile1}\" \"{$imageFile2}\" ";
+
+        // Shell command to compare images using ImageMagick's compare
+        $command =  "$subcommand null:  2>&1";
+        echo "Executing: $command\n";
+
         // Execute the shell command and capture the output
         exec($command, $output, $returnCode);
 
-        // Check if the command execution was successful
-        if ($returnCode === 0) {
+        // The command execution was successful and no differences
+        if ($returnCode == 0) {
+            return 0;
+        }
+        // The images are different
+        elseif ($returnCode == 1) {
+
+            $rating = -1;
             // Parse the output to extract the comparison result
-            $result = explode(" ", $output[0]);
-            $rating = (float) $result[0];
+            //$result = explode(" ", $output[0]);
+            preg_match('/^([\d\.]+)\s/', $output[0], $matches);
+            if (isset($matches[1])) {
+                $rating = floatval($matches[1]);
+            }
+
+            // Force generate the diff file only when rating is not 0
+            exec("$subcommand \"$diffFile\"");
 
             // Return the rating
             return $rating;
@@ -215,7 +247,7 @@ class CpdfRenderTest extends TestCase
         $output = $this->executeShellCommand("$phpExec \"$scriptFilepath\" ", $retVal, $outFile);
 
         // ??? move this out
-        $this->assertEquals($retVal, 0, "The script generation of $scriptFilepath returned an error:\n".file_get_contents($outFile));
+        $this->assertEquals(0, $retVal, "The script generation of $scriptFilepath returned an error:\n$output\n".file_get_contents($outFile)."\n");
     }
 
     public function scanDirectory($folder, $extension)
@@ -256,7 +288,7 @@ class CpdfRenderTest extends TestCase
 
             if($validate) {
                 $pdfCheck = $this->validatePDF($dstFilepath);
-                $this->assertEquals($pdfCheck, "", "PDF Validation of $dstFilepath failed");
+                $this->assertEquals("", $pdfCheck, "PDF Validation of $dstFilepath failed");
             }
         }
     }
@@ -272,7 +304,7 @@ class CpdfRenderTest extends TestCase
                 echo "Comparing  $file <-> {$dstFiles[$fname]}\n";
                 $rating = $this->compareImages($file, $dstFiles[$fname], $diff);
 
-                $this->assertEquals($rating, 0, "Comparison of $file and {$dstFiles[$fname]} failed");
+                $this->assertEquals(0, $rating, "Comparison of $file and {$dstFiles[$fname]} failed with rating $rating");
             }
         }
     }
