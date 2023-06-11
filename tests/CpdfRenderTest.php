@@ -124,7 +124,7 @@ class CpdfRenderTest extends TestCase
         //$command = $this->magick . " -density 300 -depth 8 -quality 85 \"{$pdfFile}\" \"$destFile\"";
     
         // Prepare the Ghostscript command
-        $command = $this->gs ." -dBATCH -dNOPAUSE -sDEVICE=pngalpha -dTextAlphaBits=1 -dGraphicsAlphaBits=1 -o ".escapeshellarg($destFile) ." -r300 ".escapeshellarg($pdfFile)."";
+        $command = $this->gs ." -dBATCH -dNOPAUSE -sDEVICE=pngalpha -dTextAlphaBits=1 -dGraphicsAlphaBits=1 -o \"$destFile\" -r300 \"$pdfFile\"";
 
         // Execute the shell command
         $shellOutput = $this->executeShellCommand($command, $shellRet);
@@ -177,7 +177,7 @@ class CpdfRenderTest extends TestCase
 
     public function compareImages($imageFile1, $imageFile2, $diffFile) {
         // Shell command to compare images using ImageMagick
-        $command = $this->magick . " compare -metric RMSE \"{$imageFile1}\" \"{$imageFile2}\" \"$diffFile\" 2>&1";
+        $command = $this->magick . " compare -metric RMSE  \"{$imageFile1}\" \"{$imageFile2}\" \"$diffFile\" 2>&1";
         
         // Execute the shell command and capture the output
         exec($command, $output, $returnCode);
@@ -202,7 +202,7 @@ class CpdfRenderTest extends TestCase
         chdir(dirname($scriptFilepath));
 
         $err = "";
-        $output = $this->executeShellCommand("$phpExec ".escapeshellarg($scriptFilepath)." 2>&1", $err, $outFile);
+        $output = $this->executeShellCommand("$phpExec \"$scriptFilepath\" 2>&1", $err, $outFile);
 
         // ??? move this out
         $this->assertEquals($err, 0, "The shell command returned an error:\n".file_get_contents($scriptFilepath));
@@ -254,6 +254,7 @@ class CpdfRenderTest extends TestCase
         foreach ($srcFiles as $fname=>$file) {
             if (isset($dstFiles[$fname])) {
                 $diff = $this->replaceExtension($dstFiles[$fname], 'diff.png');
+                echo "Comparing  $file <-> {$dstFiles[$fname]}\n";
                 $rating = $this->compareImages($file, $dstFiles[$fname], $diff);
 
                 $this->assertEquals($rating, 0, "Comparison of $file and {$dstFiles[$fname]} failed");
@@ -271,10 +272,10 @@ class CpdfRenderTest extends TestCase
         $scriptsDir = $this->dirPath . '/../examples0';
         
         // Generate reference PDFs
-        $this->generatePdfs($scriptsDir, $this->refDir);
+        // $this->generatePdfs($scriptsDir, $this->refDir);
 
         // Generate reference PNGs
-        $this->rasterizePdfs($this->refDir, $this->outDir."/ref");
+        // $this->rasterizePdfs($this->refDir, $this->outDir."/ref");
 
         
         // Generate test PDFs
