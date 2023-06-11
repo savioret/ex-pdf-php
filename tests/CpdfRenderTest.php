@@ -286,20 +286,19 @@ class CpdfRenderTest extends TestCase
 
         $scriptsDir = $this->dirPath . '/../examples';
         
-        // Generate reference PDFs
-        $this->generatePdfs($scriptsDir, $this->refDir);
+        // Generate reference PDFs (Do this only to create a reference checkpoint)
+        //$this->generatePdfs($scriptsDir, $this->refDir);
 
-        // Generate reference PNGs
+        // Generate reference PNGs from reference PDFs
         $this->rasterizePdfs($this->refDir, $this->outDir."/ref");
 
-
         // Generate test PDFs
-        //$this->generatePdfs($scriptsDir, $this->outDir);
+        $this->generatePdfs($scriptsDir, $this->outDir);
 
         // Generate test PNGs
-        //$this->rasterizePdfs($this->outDir, $this->outDir);
+        $this->rasterizePdfs($this->outDir, $this->outDir);
 
-        //$this->compareDirectories($this->outDir . "/ref", $this->outDir);
+        $this->compareDirectories($this->outDir . "/ref", $this->outDir);
 
 
         // -----------
