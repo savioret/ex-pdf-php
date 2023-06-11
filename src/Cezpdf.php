@@ -2199,7 +2199,7 @@ class Cezpdf extends Cpdf
                 break;
             case IMAGETYPE_GIF:
                 // use GD to convert the GIF image to PNG and allow transparency
-                $this->addGifFromFile($image, $this->ez['leftMargin'] + $pad + $offset, $this->y - $pad - $height, $width, 0, $angle);
+                $this->addGifFromFile($image, $this->ez['leftMargin'] + $pad + $offset, $this->y - $pad - $height, $width, 0);
                 break;
             default:
                 $this->debug('ezImage: Unsupported image type'.$imageInfo[2], E_USER_WARNING);
