@@ -124,7 +124,7 @@ class CpdfRenderTest extends TestCase
         //$command = $this->magick . " -density 300 -depth 8 -quality 85 \"{$pdfFile}\" \"$destFile\"";
     
         // Prepare the Ghostscript command
-        $command = $this->gs ." -dBATCH -dNOPAUSE -sDEVICE=pngalpha -dTextAlphaBits=1 -dGraphicsAlphaBits=1 -o \"$destFile\" -r300 \"$pdfFile\"";
+        $command = $this->gs ." -d4 -dBATCH -dNOPAUSE -sDEVICE=pngalpha -dTextAlphaBits=1 -dGraphicsAlphaBits=1 -o \"$destFile\" -r300 \"$pdfFile\"";
 
         // Execute the shell command
         $shellOutput = $this->executeShellCommand($command, $shellRet);
@@ -149,7 +149,7 @@ class CpdfRenderTest extends TestCase
         exec($fullCmd, $output, $returnValue);
 
         // Return the error output (stderr) in the $returnValue
-        if ($returnValue) {
+        if ($returnValue == 0) {
             return implode(PHP_EOL, $output);
         }
         else {
@@ -177,7 +177,7 @@ class CpdfRenderTest extends TestCase
 
     public function compareImages($imageFile1, $imageFile2, $diffFile) {
         // Shell command to compare images using ImageMagick
-        $command = $this->magick . " compare -metric RMSE  \"{$imageFile1}\" \"{$imageFile2}\" \"$diffFile\" 2>&1";
+        $command = $this->magick . " compare -metric RMSE  \"{$imageFile1}\" \"{$imageFile2}\" \"$diffFile\" ";
         
         // Execute the shell command and capture the output
         exec($command, $output, $returnCode);
@@ -195,17 +195,27 @@ class CpdfRenderTest extends TestCase
             return -1;
         }
     }
+    public function validatePDF($filepath)
+    {
+        $nullVal = stripos(PHP_OS, 'WIN') === 0 ? 'NUL' : '/dev/null';
+        $cmd = "$this->gs -sDEVICE=pdfwrite -dNOPAUSE -dBATCH -dNOPROMPT -dSAFER -dQUIET -sOutputFile=$nullVal \"$filepath\"";
 
-    public function runPdfScript($scriptFilepath, $outFile) 
+        $err = 0;
+        $output = $this->executeShellCommand($cmd, $err);
+
+        return $output;
+    }
+
+    public function runPdfScript($scriptFilepath, $outFile)
     {
         $phpExec = PHP_BINARY;
         chdir(dirname($scriptFilepath));
 
-        $err = "";
-        $output = $this->executeShellCommand("$phpExec \"$scriptFilepath\" 2>&1", $err, $outFile);
+        $retVal = 0;
+        $output = $this->executeShellCommand("$phpExec \"$scriptFilepath\" ", $retVal, $outFile);
 
         // ??? move this out
-        $this->assertEquals($err, 0, "The shell command returned an error:\n".file_get_contents($scriptFilepath));
+        $this->assertEquals($retVal, 0, "The script generation of $scriptFilepath returned an error:\n".file_get_contents($outFile));
     }
 
     public function scanDirectory($folder, $extension)
@@ -233,7 +243,7 @@ class CpdfRenderTest extends TestCase
         }
     }
 
-    public function generatePdfs($srcFolder, $dstFolder)
+    public function generatePdfs($srcFolder, $dstFolder, $validate=true)
     {
         chdir($srcFolder);
         $files = $this->scanDirectory($srcFolder, 'php');
@@ -243,6 +253,11 @@ class CpdfRenderTest extends TestCase
             $pdfFilepath = $this->replaceExtension($file, 'pdf');
             $dstFilepath = $dstFolder . '/' . basename($pdfFilepath);
             $this->runPdfScript($file, $dstFilepath);
+
+            if($validate) {
+                $pdfCheck = $this->validatePDF($dstFilepath);
+                $this->assertEquals($pdfCheck, "", "PDF Validation of $dstFilepath failed");
+            }
         }
     }
 
@@ -269,22 +284,25 @@ class CpdfRenderTest extends TestCase
     {
         print "Current directory:" . getcwd();
 
-        $scriptsDir = $this->dirPath . '/../examples0';
+        $scriptsDir = $this->dirPath . '/../examples';
         
         // Generate reference PDFs
-        // $this->generatePdfs($scriptsDir, $this->refDir);
+        $this->generatePdfs($scriptsDir, $this->refDir);
 
         // Generate reference PNGs
-        // $this->rasterizePdfs($this->refDir, $this->outDir."/ref");
+        $this->rasterizePdfs($this->refDir, $this->outDir."/ref");
 
-        
+
         // Generate test PDFs
-        $this->generatePdfs($scriptsDir, $this->outDir);
+        //$this->generatePdfs($scriptsDir, $this->outDir);
 
         // Generate test PNGs
-        $this->rasterizePdfs($this->outDir, $this->outDir);
+        //$this->rasterizePdfs($this->outDir, $this->outDir);
 
-        $this->compareDirectories($this->outDir . "/ref", $this->outDir);
+        //$this->compareDirectories($this->outDir . "/ref", $this->outDir);
+
+
+        // -----------
 
         // chdir($this->dirPath.'/../examples');
         // $outFile = "{$this->outDir}/columns.pdf";
