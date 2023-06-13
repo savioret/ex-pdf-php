@@ -3,6 +3,8 @@
     <testsuites>
         <testsuite name="Cpdf Tests">
             <file>tests/CpdfTest.php</file>
+            <file>tests/CpdfExamplesTest.php</file>
+            <file>tests/CpdfFeaturesTest.php</file>
         </testsuite>
     </testsuites>
 </phpunit>

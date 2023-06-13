@@ -48,10 +48,6 @@ function code39($text, $barcodethinwidth = 2, $barcodeheight = 40, $xpos = 0, $y
 
 class Creport extends Cezpdf
 {
-    public function Creport($p, $o)
-    {
-        parent::__construct($p, $o);
-    }
     // Rectangle Callback function for Text output
     public function rect($info)
     {
@@ -81,12 +77,31 @@ $height = $pdf->getFontHeight($size);
 // modified to use the local file if it can
 $pdf->openHere('Fit');
 
-$mydata = [];
+// Generate a const array instead of rand to reuse this script for testing
+$codes = [
+    2303,
+    1262,
+    4011,
+    7827,
+    3914,
+    4948,
+    2551,
+    8085,
+    7590,
+    4979,
+    8891,
+    3435,
+    9096,
+    7710,
+    9333,
+    1102
+];
+
 $MAXcodeWidth = 0;
-for ($i = 0; $i < 7; ++$i) {
+for ($i = 0; $i < sizeof($codes); ++$i) {
     $const = '';
-    $r = rand(1000, 9999);
-    // return rectangle array from code39line.php
+    $r = $codes[$i];
+    // return rectangle array
     $code39RECT = code39($r, 0.8, 17, 0, -5);
     foreach ($code39RECT as $v) {
         $const .= '<C:rect:'.implode(',', $v).'>';

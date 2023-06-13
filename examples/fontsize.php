@@ -15,7 +15,7 @@ $txt = "This text serves as a practical demonstration of how <c:fontsize:50>font
 $pdf->ezText($txt);
 
 $pdf->ezText("\n<b>Using text spacing:</b>");
-$pdf->ezText($txt, 0 , ['spacing' => 5]);
+$pdf->ezText($txt, 0, ['spacing' => 5]);
 
 $pdf->ezNewPage();
 $pdf->ezText("\n<b>Change size inside a table, using text spacing:</b>");
@@ -27,11 +27,11 @@ $tableprops = [
 
 $data = [[$txt],[$txt]];
 $pdf->ezTable(
-        $data,
-        '',
-        '',
-        $tableprops + ['width' => $contentWidth, 'cols' => [['spacing' => 3,'justification'=>'full']]]
-    );
+    $data,
+    '',
+    '',
+    $tableprops + ['width' => $contentWidth, 'cols' => [['spacing' => 3,'justification'=>'full']]]
+);
 
 
 $txt2 = "This isj text to show how <c:fontsize:80>full justification</c:fontsize> <c:fontsize:7>  behaves in a paragraph.</c:fontsize>The expected behavior is that the first and the last lines are not fully aligned. This is text to show how full justification behaves in a paragraph. The expected behavior is that the first and the last lines are not fully aligned.";

@@ -23,10 +23,11 @@ $txtb = "<u>Phasellus eu suscipit turpis</u>. Ut bibendum gravida lacus, sit ame
 
 Maecenas orci metus, interdum vel risus aliquam, condimentum dignissim lectus. Ut sit amet vulputate massa. Praesent mollis commodo tortor, vitae scelerisque libero. Donec tincidunt tortor tortor, ac venenatis libero porttitor sed. Ut luctus, nisl ut rutrum pretium, nisl sem gravida nisi, nec tristique neque risus sollicitudin mauris. Praesent elit lectus, molestie sit amet diam at, sollicitudin varius dui. In congue luctus nisi, at dictum mauris convallis vel. Aenean nec varius risus, et convallis erat. Morbi ac ipsum volutpat, aliquam libero vitae, faucibus elit. Ut dapibus dolor sed aliquam condimentum. Cras pretium, dolor a dignissim sagittis, risus sem convallis orci, non molestie arcu velit vitae metus.";
 
-$pdf->ezColumnsStart($options = ['num' => 2]);
-$pdf->ezText($txt);
+$pdf->ezColumnsStart(['num' => 2]);
+$options = ['justification' => 'full'];
+$pdf->ezText($txt, 0, $options);
 $pdf->ezNewPage();
-$pdf->ezText($txta);
+$pdf->ezText($txta, 0, $options);
 $data = [
     ['num' => 1, 'name' => 'gandalf', 'type' => 'wizard']
     ,
@@ -51,7 +52,7 @@ $pdf->ezTable($data, '', '', [
         'type' => ['bgcolor' => [0.6, 0.4, 0.2]]
     ]
 ]);
-$pdf->ezText("\n$txtb");
+$pdf->ezText("\n$txtb", 0, $options);
 $pdf->ezColumnsStop();
 
 if (isset($_GET['d']) && $_GET['d']) {
