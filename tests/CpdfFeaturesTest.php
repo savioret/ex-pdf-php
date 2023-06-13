@@ -3,7 +3,7 @@ use PHPUnit\Framework\TestCase;
 
 include_once "CpdfRenderTest.php";
 
-class CpdfFeaturesTest extends AbstractRenderTest
+class CpdfFeaturesTest extends CpdfRenderBase
 {
     public function __construct()
     {

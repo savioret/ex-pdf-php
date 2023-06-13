@@ -5,7 +5,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * @doesNotPerformAssertions
  */
-class AbstractRenderTest extends TestCase
+class CpdfRenderBase extends TestCase
 {
     /**
      * Where to put generated pdf and png files
