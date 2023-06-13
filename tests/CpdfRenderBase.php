@@ -205,7 +205,7 @@ class CpdfRenderBase extends TestCase
 
         // Shell command to compare images using ImageMagick's compare
         $command =  "$subcommand null:  2>&1";
-        echo "Executing: $command\n";
+        //echo "Executing: $command\n";
 
         // Execute the shell command and capture the output
         exec($command, $output, $returnCode);

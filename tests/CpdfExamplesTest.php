@@ -1,7 +1,7 @@
 <?php
 use PHPUnit\Framework\TestCase;
 
-include_once "CpdfRenderTest.php";
+include_once "CpdfRenderBase.php";
 
 class CpdfExamplesTest extends CpdfRenderBase
 {
