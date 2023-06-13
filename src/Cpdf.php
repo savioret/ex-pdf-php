@@ -3291,7 +3291,7 @@ class Cpdf
         $parts = preg_split('/$\R?^/m', $text);
         foreach ($parts as $v) {
             $height = 0;
-            $text = $this->addText2($x, $y, $size, $v, $width, $height, $justification, $angle, $wordSpaceAdjust, $test);
+            $text = $this->addTextEx($x, $y, $size, $v, $width, $height, $justification, $angle, $wordSpaceAdjust, $test);
             $y -= $height;
         }
     }
