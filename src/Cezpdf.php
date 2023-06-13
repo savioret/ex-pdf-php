@@ -1538,6 +1538,7 @@ class Cezpdf extends Cpdf
             $x1 = $baseX1 + $dm;
             $middle = ($x1 + $x0) / 2;
 
+            $orgHeight = $this->getFontHeight($options['fontSize']);
             // if the title is set, then do that
             if (strlen($title)) {
                 $w = $this->getTextWidth($options['titleFontSize'], $title);
@@ -1569,7 +1570,6 @@ class Cezpdf extends Cpdf
             $y = $this->y; // to simplify the code a bit
 
             // make the table
-            $orgHeight = $this->getFontHeight($options['fontSize']);
             $height = $orgHeight;
             $descender = $this->getFontDescender($options['fontSize']);
 
@@ -2673,7 +2673,7 @@ class Cezpdf extends Cpdf
      */
     public function comment(&$info)
     {
-        if (isset($info)) {
+        if (isset($info) && $info['status'] == 'start') {
             $offsetY = $info['y'];
             // split title and text content use '|' char
             $commentPart = preg_split("/\|/", $info['p']);
@@ -2747,9 +2747,6 @@ class Cezpdf extends Cpdf
                 $override['x'] = $saved_x + $indent;
                 break;
             case 'end':
-                // if (empty($this->callback['indent'])) {
-                //     $info['x'] = 0;
-                // }
                 break;
         }
 
