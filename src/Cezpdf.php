@@ -74,22 +74,10 @@ class Cezpdf extends Cpdf
     protected $ezBackground = [];
 
     /**
-     * Stored max height of elements for the current processed text
-     * @var int
-     */
-    protected $addTextMaxHeight = 0;
-    
-    /**
      * Stored max font size for the current processed text
-     * @var int
+     * @var float
      */
     protected $addTextMaxSize = 0;
-
-    /**
-     * Stored original font size for the current processed text
-     * @var int
-     */
-    protected $addTextOrigSize = 0;
 
 
     /**
@@ -2479,9 +2467,9 @@ class Cezpdf extends Cpdf
     {
         $yOffset = 0;
         
-        $this->addTextOrigSize = $size;
+        $maxHeight = 0;
+        $orgSize = $size;
         $this->addTextMaxSize = 0;
-        $this->addTextMaxHeight = 0;
 
         // get maximum size and height from custom callbacks in current text
         foreach ($parts as $p) {
@@ -2490,7 +2478,7 @@ class Cezpdf extends Cpdf
             }
             // only compute height on custom callbacks
             if (!empty($p['callback']['isCustom']) && isset($p['callback']['height'])) {
-                $this->addTextMaxHeight = max($this->addTextMaxHeight, $p['callback']['height']);
+                $maxHeight = max($maxHeight, $p['callback']['height']);
             }
         }
         foreach ($this->callback as $p) {
@@ -2499,25 +2487,20 @@ class Cezpdf extends Cpdf
             }
             // only compute height on custom callbacks
             if (!empty($p['callback']['isCustom']) && isset($p['callback']['height'])) {
-                $this->addTextMaxHeight = max($this->addTextMaxHeight, $p['callback']['height']);
+                $maxHeight = max($maxHeight, $p['callback']['height']);
             }
         }
 
         $maxFontHeight = $this->getFontHeight($this->addTextMaxSize);
-        if ($this->addTextMaxSize && $this->addTextMaxSize != $this->addTextOrigSize) {
+        if ($this->addTextMaxSize && $this->addTextMaxSize != $orgSize) {
             $yOffset = $maxFontHeight;
         }
 
-        if (empty($this->addTextMaxSize)) {
-            $this->addTextMaxSize = $this->addTextOrigSize;
+
+        if ($maxHeight && $maxHeight > $height && $maxHeight > $maxFontHeight) {
+            $yOffset = $maxHeight;
         }
 
-        if ($this->addTextMaxHeight && $this->addTextMaxHeight > $height && $this->addTextMaxHeight > $maxFontHeight) {
-            $yOffset = $this->addTextMaxHeight;
-        }
-
-        $this->addTextYOffset = $yOffset;
-        
         if ($yOffset) {
             $height = $yOffset;
             // out of page
@@ -2526,7 +2509,7 @@ class Cezpdf extends Cpdf
                 $this->ezNewPage();
                 $y = $this->y - $yOffset;
             } else {
-                $y -= $yOffset - $this->getFontHeight($this->addTextOrigSize);
+                $y -= $yOffset - $this->getFontHeight($orgSize);
             }
         }
 
@@ -2540,12 +2523,10 @@ class Cezpdf extends Cpdf
 
     protected function afterAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $height, &$justification, &$angle, &$wordSpaceAdjust, $test)
     {
-        if ($this->addTextYOffset && $this->addTextMaxSize > $size) {
+        if ($this->addTextMaxSize && $this->addTextMaxSize > $size) {
             $this->y += $this->getFontDescender($this->addTextMaxSize);
         }
-        $this->addTextY = $this->y;
-        $this->prevAddTextMaxSize = $this->addTextMaxSize;
-        $this->addTextMaxHeight = $this->addTextMaxSize = 0;
+        $this->addTextMaxSize = 0;
     }
 
 
@@ -2894,6 +2875,7 @@ class Cezpdf extends Cpdf
 
     /**
      * @see image
+     * @deprecated
      */
     public function showimage(&$info)
     {
