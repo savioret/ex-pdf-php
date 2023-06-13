@@ -2737,6 +2737,7 @@ class Cpdf
 
         header('Content-Type: application/pdf');
         header('Content-Length: '.$length);
+        header('Cache-Control: private');
         $fileName = (isset($options['Content-Disposition']) ? $options['Content-Disposition'] : 'file.pdf');
         if (isset($options['download']) && $options['download'] == 1) {
             $attached = 'attachment';
