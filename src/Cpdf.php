@@ -2822,26 +2822,42 @@ class Cpdf
 
     /**
      * callback triggered right before text is added and after the text was
-     * prepared in its parts array.
+     * prepared in its parts array. @see addTextWithDirectives
      *
-     * @param array $parts
-     * @param float $x
-     * @param float $y
-     * @param float $size
-     * @param string $text
-     * @param float $width
-     * @param float $height
-     * @param string $justification
-     * @param float $angle
-     * @param string $wordSpaceAdjust
-     * @param bool $test
+     * @param array $parts the calculated text parts provided by addTextWithDirectives
+     * @param float $x x coordinate where the text will start
+     * @param float $y y coordinate of the text baseline
+     * @param float $size the font size in glyph units
+     * @param string $text the text that is being added
+     * @param float $width the width where this text must fit in
+     * @param float $height the height that this text is taking
+     * @param string $justification text justification
+     * @param float $angle angle in degrees
+     * @param string $wordSpaceAdjust The space between words in the text.
+     * @param bool $test if we are just testing, not adding the text
      * @return void
      */
     protected function beforeAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $orgWidth, &$height, &$justification, &$angle, &$wordSpaceAdjust, $test)
     {
     }
 
-
+    /**
+     * callback triggered right after text is added in addText. @see addText
+     * In this case $text will contain the remaining text to add
+     *
+     * @param array $parts the calculated text parts provided by addTextWithDirectives
+     * @param float $x x coordinate where the text will start
+     * @param float $y y coordinate of the text baseline
+     * @param float $size the font size in glyph units
+     * @param string $text the text that could not be added into the given width
+     * @param float $width remaining width that was not used after the text was addded
+     * @param float $height the height that this text block is taking after being added
+     * @param string $justification text justification
+     * @param float $angle angle in degrees
+     * @param string $wordSpaceAdjust The space between words in the text.
+     * @param bool $test if we are just testing, not adding the text
+     * @return void
+     */
     protected function afterAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $height, &$justification, &$angle, &$wordSpaceAdjust, $test)
     {
     }
@@ -2849,7 +2865,14 @@ class Cpdf
 
     /**
      * Process the custom text callback call during the preparation stage of addText
-     * @param bool $isEnd
+     * The callback is called using 'prepare_start' / 'prepare_end' instead of
+     * 'start'/'end'
+     * When calling addTextWithDirectives we need to follow the same process as 
+     * in addText as callbacks may modify the calculated text boundaries.
+     *
+     * @see processTextCallback
+     *
+     * @param bool $isEnd if this is and end call
      * @param array $info all callback information
      * @param float $x x position of the addText
      * @param float $y y position of the addText
@@ -2869,7 +2892,15 @@ class Cpdf
 
     /**
      * Process the custom text callback call during the process stage of addText
-     * @param array $info all callback information
+     * This function calls the function and gets the returned override values
+     * All override values are stored in the $info array
+     * Specific override values are also applied to the correspondent variable
+     *   - $x: modify the x position of the current processed text
+     *   - $size: modify current size of the current processed text
+     *   - $width: modify remaining width of the current processed text
+     *
+     * @param array $info all callback information, can be modified by the returned
+     *                    array values of the callback.
      * @param float $x x position of the addText
      * @param float $y y position of the addText
      * @param float $size font size
@@ -2905,43 +2936,47 @@ class Cpdf
      * This function prepares text with directives at the specified coordinates and
      * with the specified font size and style. The function also allows for text justification and
      * rotation, and returns an array of text and formatting information.
+     * The returned array of parts will only contain the text that fits into the
+     * maximum provided width.
      *
-     * @param string &$text             The text to add to the PDF document
-     * @param float  $x                 The x coordinate of the starting point of the text
-     * @param float  $y                 The y coordinate of the starting point of the text
-     * @param float  $size              The font size of the text
-     * @param float  &$width            The maximum width available for the text
-     * @param string $justification     The justification of the text: "left", "center", or "right"
-     * @param float  $angle             The angle of rotation for the text
-     * @param float  $wordSpaceAdjust   The space between words in the text
+     * @param string &$text             The text to add to the PDF document. Will output the
+     *                                  remaining text that could not fit into the given width.
+     * @param float  $x                 The x coordinate of the starting point of the text.
+     * @param float  $y                 The y coordinate of the starting point of the text.
+     * @param float  $size              The font size of the text.
+     * @param float  &$width            The maximum width available for the text. Will output
+     *                                  the remaining width not fitted with text.
+     * @param string $justification     The justification of the text: "left", "center", or "right".
+     * @param float  $angle             The angle of rotation for the text.
+     * @param float  $wordSpaceAdjust   The space between words in the text.
      *
-     * @return array                    An array of text and formatting information
+     * @return array                    An array of text and formatting information.
      *
-     * Example of returned array for:
-     *   $text = "Hello<b>World</b>! extra text"
-     *   $width = 100
+     *  Example of returned array for:
+     *    $text = "Hello<b>World</b>! extra text"
+     *    $width = 100
      *
-     *   [
-     *       0 => [
-     *           'text' => "Hello ",
-     *           'nspaces' => 1,
-     *           'callback' => ['func' => 'b', 'status' => 'start', ... ]
-     *       ],
-     *       1 => [
-     *           'text': "World",
-     *           'nspaces': 0,
-     *           'callback': ['func' => 'b', 'status' => 'end', ... ]
-     *       ],
-     *       2 => [
-     *           'text' => "!",
-     *           'nspaces' => 1,
-     *           'callback' => null
-     *       ]
-     *   ]
+     *    [
+     *        0 => [
+     *            'text' => "Hello ",
+     *            'nspaces' => 1,
+     *            'callback' => ['func' => 'b', 'status' => 'start', ... ]
+     *        ],
+     *        1 => [
+     *            'text': "World",
+     *            'nspaces': 0,
+     *            'callback': ['func' => 'b', 'status' => 'end', ... ]
+     *        ],
+     *        2 => [
+     *            'text' => "!",
+     *            'nspaces' => 1,
+     *            'callback' => null
+     *        ]
+     *    ]
      *
-     * With the next resulting output values:
-     *   $text = "extra text" (will be processed in next call)
-     *   $width = 17.489
+     *  With the next resulting output values:
+     *    $text = "extra text" (will be processed in next call)
+     *    $width = 17.489
      */
     private function addTextWithDirectives(&$text, $x, $y, $size, &$width, $justification = 'left', $angle = 0, $wordSpaceAdjust = 0)
     {

@@ -2446,22 +2446,9 @@ class Cezpdf extends Cpdf
         eval($this->ez['templates'][$id]['code']);
     }
 
+
     /**
-     * callback triggered right before text is added and after the text was
-     * prepared in its parts array.
-     *
-     * @param array $parts
-     * @param float $x
-     * @param float $y
-     * @param float $size
-     * @param string $text
-     * @param float $width
-     * @param float $height
-     * @param string $justification
-     * @param float $angle
-     * @param string $wordSpaceAdjust
-     * @param bool $test
-     * @return void
+     * @inheritDoc
      */
     protected function beforeAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $orgWidth, &$height, &$justification, &$angle, &$wordSpaceAdjust, $test)
     {
@@ -2521,6 +2508,9 @@ class Cezpdf extends Cpdf
         // $this->restoreState();
     }
 
+    /**
+     * @inheritDoc
+     */
     protected function afterAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $height, &$justification, &$angle, &$wordSpaceAdjust, $test)
     {
         if ($this->addTextMaxSize && $this->addTextMaxSize > $size) {
