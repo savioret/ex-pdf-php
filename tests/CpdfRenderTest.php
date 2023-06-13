@@ -2,81 +2,73 @@
 
 use PHPUnit\Framework\TestCase;
 
-class CpdfRenderTest extends TestCase
+/**
+ * @doesNotPerformAssertions
+ */
+class AbstractRenderTest extends TestCase
 {
-    private $output;
-
     /**
-     * Current test generated directory
+     * Where to put generated pdf and png files
      * @var string
      */
-    private $outDir;
+    protected $outDir;
 
     /**
-     * Reference data directory to compare with
+     * Reference data directory to compare with generated files
      * @var string
      */
-    private $refDir;
+    protected $refDir;
 
     /**
      * Current file directory path
      * @var string
      */
-    private $dirPath = '';
+    protected $dirPath = '';
 
     /**
      * List of excluded pdf generation scripts
      * @var array
      */
-    private $excluded = ['image'];
+    protected $excluded = [];
 
     /**
      * ImageMagick binary path, get from env MAGICK_BINARY
      * @var string
      */
-    private $magick;
+    protected $magick;
 
     /**
      * ImageMagick compare binary path, get from env COMPARE_BINARY
      * @var string
      */
-    private $compare;
+    protected $compare;
 
     /**
      * Ghostscript binary path , get from env GS_BINARY
      * @var string
      */
-    private $gs;
+    protected $gs;
 
     public function __construct()
     {
         parent::__construct();
 
-        $this->dirPath = dirname(__FILE__);
-
-        $this->outDir = $this->dirPath . '/out';
-        $this->refDir = $this->dirPath . '/ref';
-
-        $this->ensureDir($this->outDir);
-        $this->ensureDir($this->refDir);
-        $this->ensureDir($this->outDir.'/ref');
-
-
         $this->magick = $this->getImageMagickBin();
-        $this->assertTrue(file_exists($this->magick), "ImageMagick binary does not exist ( got:$this->magick )");
-
         $this->compare = $this->getCompareBin();
-        $this->assertTrue(file_exists($this->compare), "ImageMagick compare binary does not exist ( got:$this->compare )");
-
-
         $this->gs = $this->getGhostScriptBin();
+    }
+
+    public function initChecks()
+    {
+        $this->assertTrue(file_exists($this->magick), "ImageMagick binary does not exist ( got:$this->magick )");
+        $this->assertTrue(file_exists($this->compare), "ImageMagick compare binary does not exist ( got:$this->compare )");
         $this->assertTrue(file_exists($this->gs), "GhostScript binary does not exist ( got:$this->gs )");
     }
 
     public function ensureDir($path)
     {
         if (!is_dir( $path )) {
-            mkdir( $path );
+            mkdir( $path, 0777, true );
         }
     }
 
@@ -176,7 +168,7 @@ class CpdfRenderTest extends TestCase
             
         // Always redirect error into stdout
         $fullCmd = $command .' 2>&1'.$redir;
-        echo "Executing $fullCmd\n";
+        //echo "Executing $fullCmd\n";
         exec($fullCmd, $output, $returnValue);
 
         // Return the error output (stderr) in the $returnValue
@@ -328,48 +320,5 @@ class CpdfRenderTest extends TestCase
         }
     }
 
-    /**
-     * simple text output test
-     */
-    public function test_Examples()
-    {
-        print "Current directory:" . getcwd();
-
-        $scriptsDir = $this->dirPath . '/../examples';
-        
-        // Generate reference PDFs (Do this only to create a reference checkpoint)
-        //$this->generatePdfs($scriptsDir, $this->refDir);
-
-        // Generate reference PNGs from reference PDFs
-        //$this->rasterizePdfs($this->refDir, $this->outDir."/ref");
-
-        // Generate test PDFs
-        //$this->generatePdfs($scriptsDir, $this->outDir);
-
-        // Generate test PNGs
-        //$this->rasterizePdfs($this->outDir, $this->outDir);
-
-        $this->compareDirectories($this->outDir . "/ref", $this->outDir);
-
-
-        // -----------
-
-        // chdir($this->dirPath.'/../examples');
-        // $outFile = "{$this->outDir}/columns.pdf";
-        // $output = $this->executeShellCommand("$phpExec columns.php 2>&1", $err, $outFile);
-
-        // $this->runPdfScript($filepath, $outFile))
-
-        // $this->assertEquals($err, 0, "The shell command returned an error:\n".file_get_contents("{$this->outDir}/columns.pdf"));
-        // if($err) {
-        //     echo $output;
-        // } else {
-        //     $this->assertTrue(file_exists($outFile));
-        //     $destPath = dirname($outFile);// .'/'. pathinfo($outFile, PATHINFO_FILENAME).".png";
-        //     $destFile = $this->convertPdfToPng($outFile, $destPath, $err);
-        //     $this->assertEquals($err, "", $err);
-        //     $this->assertTrue(file_exists($destFile), "The PNG file was not created");
-        // }
-    }
 
 }
