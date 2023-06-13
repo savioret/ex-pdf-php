@@ -51,6 +51,10 @@ class Creport extends Cezpdf
     // Rectangle Callback function for Text output
     public function rect($info)
     {
+        if ($info['status'] != 'start') {
+            return;
+        }
+
         // this callback records all of the table of contents entries, it also places a destination marker there
         // so that it can be linked too
         // parameters
