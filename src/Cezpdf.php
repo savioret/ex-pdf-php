@@ -2570,7 +2570,14 @@ class Cezpdf extends Cpdf
                 if (!isset($this->ez['links'])) {
                     $this->ez['links'] = [];
                 }
-                $this->ez['links'][] = ['x' => $info['x'], 'y' => $info['y'], 'angle' => $info['angle'], 'descender' => $info['descender'], 'height' => $info['height'], 'url' => $info['p']];
+                $this->ez['links'][] = [
+                    'x' => $info['x'],
+                    'y' => $info['y'],
+                    'angle' => $info['angle'],
+                    'descender' => $info['descender'],
+                    'height' => $info['height'],
+                    'url' => $info['p']
+                ];
                 if ($internal == 0) {
                     $this->saveState();
                     $this->setColor(0, 0, 1);
@@ -2616,7 +2623,13 @@ class Cezpdf extends Cpdf
                     $this->ez['links'] = [];
                 }
 
-                $this->ez['links'][] = ['x' => $info['x'], 'y' => $info['y'], 'angle' => $info['angle'], 'descender' => $info['descender'], 'height' => $info['height']];
+                $this->ez['links'][] = [
+                    'x' => $info['x'],
+                    'y' => $info['y'],
+                    'angle' => $info['angle'],
+                    'descender' => $info['descender'],
+                    'height' => $info['height']
+                ];
                 $thick = $info['height'] * $lineFactor;
                 $this->setLineStyle($thick);
                 $this->saveState();
