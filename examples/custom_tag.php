@@ -3,40 +3,44 @@ include_once '../src/Cezpdf.php';
 
 class Creport extends Cezpdf
 {
+    protected $superscriptOrgY;
 
     public function __construct($p, $o = 'portrait', $t = 'none', $op = [])
     {
         parent::__construct($p, $o, $t, $op);
 
         // register a new tag accepting a float argument
-        //$this->registerTag('superindex');//, '(:?:[\d\.])*');
-        $this->registerTag('superindex', '(?::[\d\.]+)?');
+        //$this->registerTag('superscript');//, '(:?:[\d\.])*');
+        $this->registerTag('superscript', '(?::[\d\.]+)?');
 
         // Add the tag as allowed
-        $this->allowTags(['superindex']);
+        $this->allowTags(['superscript']);
     }
     /**
-     * callback function for superindex.
+     * callback function for superscript.
      *
      * **Example**<br>
      * <pre>
-     * $pdf->ezText('X<c:superindex>2</c:superindex>');
+     * $pdf->ezText('X<c:superscript>2</c:superscript>');
      * </pre>
      *
      * @param $info
      */
-    public function superindex(&$info)
+    public function superscript(&$info)
     {
         $override = []; // overriden data
 
         switch ($info['status']) {
 
-            // Addtext is preparing the text line and a 'superindex' callback was found
+            // Addtext is preparing the text line and a 'superscript' callback was found
             // We store current y position and size to restore them later
             case 'prepare_start':
+                // get optional factorparameter as a float value
                 $factor = isset($info['p']) ? floatval($info['p']) : 0.5;
+
+                // We can pass data between prepare_start -> start and prepare_end -> end
                 $info['saved_factor'] = $factor;
-                $info['saved_y'] = $info['y'];
+                $this->superscriptOrgY = $info['y'];
 
                 // override the size in the preparation to allow correct text calculation
                 $override['size'] = $info['size'] * $factor;
@@ -47,7 +51,7 @@ class Creport extends Cezpdf
                 $newsize = $info['size'] * $info['saved_factor'];
                 // Get displacement of the text
                 $deltaY = $this->getFontHeight($info['size'])*0.6 - $this->getFontHeight($newsize)*0.4;
-                $newy = $info['saved_y'] + $deltaY;
+                $newy = $info['y'] + $deltaY;
                 // Override Y-position and text size
                 $override['y'] = $newy;
                 $override['size'] = $newsize;
@@ -57,7 +61,7 @@ class Creport extends Cezpdf
             case 'end':
             case 'prepare_end':
                 $override['size'] = $info['orgSize'];
-                $override['y'] = $info['saved_y'];
+                $override['y'] = $this->superscriptOrgY;
                 break;
         }
 
@@ -70,12 +74,12 @@ $pdf = new Creport('a4', 'portrait');
 
 $pdf->selectFont('Helvetica');
 //$pdf->selectFont('Times-Roman');
-$pdf->allowTags(['superindex']);
+$pdf->allowTags(['superscript']);
 
 $pdf->ezSetFontSize(200);
-$pdf->ezText("n<c:superindex>2</c:superindex>", 0, ['justification' => 'center']);
-$pdf->ezText("X<c:superindex>y</c:superindex>", 0, ['justification' => 'center']);
-$pdf->ezText("a<c:superindex:0.2>c</c:superindex>", 0, ['justification' => 'center']);
+$pdf->ezText("n<c:superscript>2</c:superscript>", 0, ['justification' => 'center']);
+$pdf->ezText("X<c:superscript>y</c:superscript>", 0, ['justification' => 'center']);
+$pdf->ezText("a<c:superscript:0.2>c</c:superscript>", 0, ['justification' => 'center']);
 
 if (isset($_GET['d']) && $_GET['d']) {
     echo "<pre>" . $pdf->ezOutput(true) . "</pre>";
