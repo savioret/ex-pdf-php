@@ -289,7 +289,7 @@ class CpdfRenderBase extends TestCase
         $files = $this->scanDirectory($srcFolder, 'php');
         echo "\nScanning $srcFolder for script generation files\n";
         foreach ($files as $file) {
-            if($this->isExcluded($file)) {
+            if($this->isExcluded(pathinfo($file, PATHINFO_FILENAME))) {
                 continue;
             }
             echo "Generating PDF script $file\n";
