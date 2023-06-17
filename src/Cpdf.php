@@ -2424,6 +2424,12 @@ class Cpdf
 
     /**
      * draw a line from one set of coordinates to another.
+     *
+     * @param float $x1
+     * @param float $y1
+     * @param float $x2
+     * @param float $y2
+     * @param bool  $stroke
      */
     public function line($x1, $y1, $x2, $y2)
     {
@@ -2432,6 +2438,15 @@ class Cpdf
 
     /**
      * draw a bezier curve based on 4 control points.
+     *
+     * @param float $x0
+     * @param float $y0
+     * @param float $x1
+     * @param float $y1
+     * @param float $x2
+     * @param float $y2
+     * @param float $x3
+     * @param float $y3
      */
     public function curve($x0, $y0, $x1, $y1, $x2, $y2, $x3, $y3)
     {
@@ -2466,6 +2481,19 @@ class Cpdf
      * if $r2 is not set, then a circle is drawn
      * nSeg is not allowed to be less than 2, as this will simply draw a line (and will even draw a
      * pretty crappy shape at 2, as we are approximating with bezier curves.
+     *
+     * @param float $x0
+     * @param float $y0
+     * @param float $r1
+     * @param float $r2
+     * @param float $angle
+     * @param int   $nSeg
+     * @param float $astart
+     * @param float $afinish
+     * @param bool  $close
+     * @param bool  $fill
+     * @param bool  $stroke
+     * @param bool  $incomplete
      */
     public function ellipse($x0, $y0, $r1, $r2 = 0, $angle = 0, $nSeg = 8, $astart = 0, $afinish = 360, $close = 1, $fill = 0)
     {
@@ -2533,16 +2561,18 @@ class Cpdf
 
     /**
      * this sets the line drawing style.
-     * width, is the thickness of the line in user units
-     * cap is the type of cap to put on the line, values can be 'butt','round','square'
-     *    where the diffference between 'square' and 'butt' is that 'square' projects a flat end past the
-     *    end of the line.
-     * join can be 'miter', 'round', 'bevel'
-     * dash is an array which sets the dash pattern, is a series of length values, which are the lengths of the
-     *   on and off dashes.
-     *   (2) represents 2 on, 2 off, 2 on , 2 off ...
-     *   (2,1) is 2 on, 1 off, 2 on, 1 off.. etc
-     * phase is a modifier on the dash pattern which is used to shift the point at which the pattern starts.
+     *
+     * @param float  $width the thickness of the line in user units
+     * @param string $cap the type of cap to put on the line, values can be
+     *    'butt','round','square' where the diffference between 'square' and 'butt'
+     *    is that 'square' projects a flat end past the end of the line.
+     * @param string $join can be 'miter', 'round', 'bevel'
+     * @param array  $dash is an array which sets the dash pattern, is a series of length values,
+     *    which are the lengths of the on and off dashes.
+     *    (2) represents 2 on, 2 off, 2 on , 2 off ...
+     *    (2,1) is 2 on, 1 off, 2 on, 1 off.. etc
+     * @param int    $phase a modifier on the dash pattern which is used to shift
+     *    the point at which the pattern starts.
      */
     public function setLineStyle($width = 1, $cap = '', $join = '', $dash = '', $phase = 0)
     {
@@ -2573,6 +2603,9 @@ class Cpdf
 
     /**
      * draw a polygon, the syntax for this is similar to the GD polygon command.
+     *
+     * @param float[] $p
+     * @param bool    $fill
      */
     public function polygon($p, $np, $f = 0)
     {
@@ -2591,6 +2624,11 @@ class Cpdf
     /**
      * a filled rectangle, note that it is the width and height of the rectangle which are the secondary paramaters, not
      * the coordinates of the upper-right corner.
+     *
+     * @param float $x1
+     * @param float $y1
+     * @param float $width
+     * @param float $height
      */
     public function filledRectangle($x1, $y1, $width, $height)
     {
@@ -2600,6 +2638,11 @@ class Cpdf
     /**
      * draw a rectangle, note that it is the width and height of the rectangle which are the secondary paramaters, not
      * the coordinates of the upper-right corner.
+     *
+     * @param float $x1
+     * @param float $y1
+     * @param float $width
+     * @param float $height
      */
     public function rectangle($x1, $y1, $width, $height)
     {
@@ -2609,6 +2652,11 @@ class Cpdf
     /**
      * add a new page to the document
      * this also makes the new page the current active object.
+     *
+     * @param int $insert
+     * @param int $id
+     * @param string $pos
+     * @return int number of the currently active contents block
      */
     public function newPage($insert = 0, $id = 0, $pos = 'after')
     {
@@ -2709,18 +2757,19 @@ class Cpdf
      * output the pdf code, streaming it to the browser
      * the relevant headers are set so that hopefully the browser will recognise it
      * this method is protected to force user to use ezStream method from Cezpdf.php.
+     *
+     * @param array $options Associative array that allows the adjustment of the headers
+     * values at the moment are:
+     *    'Content-Disposition' => (string) 'filename'  - sets the filename, though not too sure how well this will
+     *        work as in my trial the browser seems to use the filename of the php file with .pdf on the end
+     *    'Accept-Ranges'       => (int) 1 or 0 - if this is not set to 1, then this header is not included, off by default
+     *                              this header seems to have caused some problems despite tha fact that it is supposed to solve
+     *                              them, so I am leaving it off by default.
+     *    'compress'            => (int) 1 or 0 - apply content stream compression, this is on (1) by default
+     *    'download'            => (int) 1 or 0 - provide download dialog
      */
     protected function stream($options = '')
     {
-        // setting the options allows the adjustment of the headers
-        // values at the moment are:
-        // 'Content-Disposition'=>'filename'  - sets the filename, though not too sure how well this will
-        //        work as in my trial the browser seems to use the filename of the php file with .pdf on the end
-        // 'Accept-Ranges'=>1 or 0 - if this is not set to 1, then this header is not included, off by default
-        //    this header seems to have caused some problems despite tha fact that it is supposed to solve
-        //    them, so I am leaving it off by default.
-        // 'compress'=> 1 or 0 - apply content stream compression, this is on (1) by default
-        // 'download'=> 1 or 0 - provide download dialog
         if (!is_array($options)) {
             $options = [];
         }
@@ -2737,6 +2786,7 @@ class Cpdf
 
         header('Content-Type: application/pdf');
         header('Content-Length: '.$length);
+        header('Cache-Control: private');
         $fileName = (isset($options['Content-Disposition']) ? $options['Content-Disposition'] : 'file.pdf');
         if (isset($options['download']) && $options['download'] == 1) {
             $attached = 'attachment';
@@ -2753,6 +2803,8 @@ class Cpdf
 
     /**
      * return the height in units of the current font in the given size.
+     * @param float $size
+     * @return float
      */
     public function getFontHeight($size)
     {
@@ -2771,6 +2823,8 @@ class Cpdf
      * return the font descender, this will normally return a negative number
      * if you add this number to the baseline, you get the level of the bottom of the font
      * it is in the pdf user units.
+     * @param float $size
+     * @return float
      */
     public function getFontDescender($size)
     {
@@ -2786,6 +2840,11 @@ class Cpdf
     /**
      * filter the text, this is applied to all text just before being inserted into the pdf document
      * it escapes the various things that need to be escaped, and so on.
+     *
+     * @param $text
+     * @param bool $bom
+     * @param bool $convert_encoding
+     * @return string
      */
     protected function filterText($text, $bom = true, $convert_encoding = true)
     {
@@ -2823,25 +2882,43 @@ class Cpdf
     /**
      * callback triggered right before text is added and after the text was
      * prepared in its parts array.
+     * @see addTextWithDirectives
      *
-     * @param array $parts
-     * @param float $x
-     * @param float $y
-     * @param float $size
-     * @param string $text
-     * @param float $width
-     * @param float $height
-     * @param string $justification
-     * @param float $angle
-     * @param string $wordSpaceAdjust
-     * @param bool $test
+     * @param array $parts the calculated text parts provided by addTextWithDirectives
+     * @param float $x x coordinate where the text will start
+     * @param float $y y coordinate of the text baseline
+     * @param float $size the font size in glyph units
+     * @param string $text the text that is being added
+     * @param float $width the width where this text must fit in
+     * @param float $height the height that this text is taking
+     * @param string $justification text justification
+     * @param float $angle angle in degrees
+     * @param string $wordSpaceAdjust The space between words in the text.
+     * @param bool $test if we are just testing, not adding the text
      * @return void
      */
     protected function beforeAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $orgWidth, &$height, &$justification, &$angle, &$wordSpaceAdjust, $test)
     {
     }
 
-
+    /**
+     * callback triggered right after text is added in addText.
+     * In this case $text will contain the remaining text to add
+     * @see addText
+     *
+     * @param array $parts the calculated text parts provided by addTextWithDirectives
+     * @param float $x x coordinate where the text will start
+     * @param float $y y coordinate of the text baseline
+     * @param float $size the font size in glyph units
+     * @param string $text the text that could not be added into the given width
+     * @param float $width remaining width that was not used after the text was addded
+     * @param float $height the height that this text block is taking after being added
+     * @param string $justification text justification
+     * @param float $angle angle in degrees
+     * @param string $wordSpaceAdjust The space between words in the text.
+     * @param bool $test if we are just testing, not adding the text
+     * @return void
+     */
     protected function afterAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $height, &$justification, &$angle, &$wordSpaceAdjust, $test)
     {
     }
@@ -2849,7 +2926,14 @@ class Cpdf
 
     /**
      * Process the custom text callback call during the preparation stage of addText
-     * @param bool $isEnd
+     * The callback is called using 'prepare_start' / 'prepare_end' instead of
+     * 'start'/'end'
+     * When calling addTextWithDirectives we need to follow the same process as
+     * in addText as callbacks may modify the calculated text boundaries.
+     *
+     * @see processTextCallback
+     *
+     * @param bool $isEnd if this is and end call
      * @param array $info all callback information
      * @param float $x x position of the addText
      * @param float $y y position of the addText
@@ -2869,9 +2953,39 @@ class Cpdf
 
     /**
      * Process the custom text callback call during the process stage of addText
-     * @param array $info all callback information
-     * @param float $x x position of the addText
-     * @param float $y y position of the addText
+     * This function calls the function and gets the returned override values
+     * All override values are stored in the $info array
+     * Specific override values are also applied to the correspondent variable
+     *   - $x: modify the x position of the current processed text
+     *   - $size: modify current size of the current processed text
+     *   - $width: modify remaining width of the current processed text
+     *
+     * @param array $info all callback information, can be modified by the returned
+     *                    array values of the callback.
+     *   'func' => (string) callback function to be invoked
+     *   'p' => (string) raw string of parameters
+     *   'status' => (string) string identifying the processing stage it can take these values
+     *           'prepare_start': start of preprocessing of a line of text.
+     *                            You should only perform calculations or modifications that
+     *                            help the processing to re-arrange the line of text properly
+     *           'prepare_end': end of preprocessing of a line of text
+     *           'start': start of processing of a line of text
+     *           'end': end of processing of a line of text
+     *   'x' => (float) x coordinate when this callback is triggered during the text processing
+     *   'y' => (float) x coordinate when this callback is triggered during the text processing
+     *   'size' => (float) current font size (may be modified by any callback)
+     *   'orgSize' => (float) original font size with no modifications (callbacks could have momdified it)
+     *   'angle' => (float) rotation angle
+     *   'descender' => (float) font descender value
+     *   'orgWidth' => (float) original width (horizontal space where the remaining text must fit in)
+     *   'width' => (float) current remaining width (may be modified by any callback)
+     *   'height' => (float) the height of thi piece of text. By default the height of the font size
+     *   'orgHeight' => (float) original text height,
+     *   'isCustom' => (bool) indicates if this is a custom callback,
+     *   'noClose' => (bool) indicates if this callback requires no closing tag ( <C:cb> )
+     *
+     * @param float $x x position where the text is begin added
+     * @param float $y y position where the text is begin added
      * @param float $size font size
      * @param float $width available width to add the text
      * @return void
@@ -2887,6 +3001,10 @@ class Cpdf
             if (isset($override['x'])) {
                 $width -= $override['x'] - $x;
                 $x = $override['x'];
+            }
+
+            if (isset($override['y'])) {
+                $y = $override['y'];
             }
 
             if (isset($override['size'])) {
@@ -2905,43 +3023,47 @@ class Cpdf
      * This function prepares text with directives at the specified coordinates and
      * with the specified font size and style. The function also allows for text justification and
      * rotation, and returns an array of text and formatting information.
+     * The returned array of parts will only contain the text that fits into the
+     * maximum provided width.
      *
-     * @param string &$text             The text to add to the PDF document
-     * @param float  $x                 The x coordinate of the starting point of the text
-     * @param float  $y                 The y coordinate of the starting point of the text
-     * @param float  $size              The font size of the text
-     * @param float  &$width            The maximum width available for the text
-     * @param string $justification     The justification of the text: "left", "center", or "right"
-     * @param float  $angle             The angle of rotation for the text
-     * @param float  $wordSpaceAdjust   The space between words in the text
+     * @param string &$text             The text to add to the PDF document. Will output the
+     *                                  remaining text that could not fit into the given width.
+     * @param float  $x                 The x coordinate of the starting point of the text.
+     * @param float  $y                 The y coordinate of the starting point of the text.
+     * @param float  $size              The font size of the text.
+     * @param float  &$width            The maximum width available for the text. Will output
+     *                                  the remaining width not fitted with text.
+     * @param string $justification     The justification of the text: "left", "center", or "right".
+     * @param float  $angle             The angle of rotation for the text.
+     * @param float  $wordSpaceAdjust   The space between words in the text.
      *
-     * @return array                    An array of text and formatting information
+     * @return array                    An array of text and formatting information.
      *
-     * Example of returned array for:
-     *   $text = "Hello<b>World</b>! extra text"
-     *   $width = 100
+     *  Example of returned array for:
+     *    $text = "Hello<b>World</b>! extra text"
+     *    $width = 100
      *
-     *   [
-     *       0 => [
-     *           'text' => "Hello ",
-     *           'nspaces' => 1,
-     *           'callback' => ['func' => 'b', 'status' => 'start', ... ]
-     *       ],
-     *       1 => [
-     *           'text': "World",
-     *           'nspaces': 0,
-     *           'callback': ['func' => 'b', 'status' => 'end', ... ]
-     *       ],
-     *       2 => [
-     *           'text' => "!",
-     *           'nspaces' => 1,
-     *           'callback' => null
-     *       ]
-     *   ]
+     *    [
+     *        0 => [
+     *            'text' => "Hello ",
+     *            'nspaces' => 1,
+     *            'callback' => ['func' => 'b', 'status' => 'start', ... ]
+     *        ],
+     *        1 => [
+     *            'text': "World",
+     *            'nspaces': 0,
+     *            'callback': ['func' => 'b', 'status' => 'end', ... ]
+     *        ],
+     *        2 => [
+     *            'text' => "!",
+     *            'nspaces' => 1,
+     *            'callback' => null
+     *        ]
+     *    ]
      *
-     * With the next resulting output values:
-     *   $text = "extra text" (will be processed in next call)
-     *   $width = 17.489
+     *  With the next resulting output values:
+     *    $text = "extra text" (will be processed in next call)
+     *    $width = 17.489
      */
     private function addTextWithDirectives(&$text, $x, $y, $size, &$width, $justification = 'left', $angle = 0, $wordSpaceAdjust = 0)
     {
@@ -2959,6 +3081,7 @@ class Cpdf
         foreach (array_filter($this->prep_callback, function ($v) {
             return $v['isCustom'];
         }) as $info) {
+            $info['isOpen'] = true;
             $this->processPrepareCallback(false/*start*/, $info, $x, $y, $size, $width);
         }
 
@@ -3048,6 +3171,7 @@ class Cpdf
                     'height' => $this->getFontHeight($size),
                     'orgHeight' => $orgHeight,
                     'isCustom' => $isCustom,
+                    'isOpen' => isset($this->prep_callback[$func]),
                     'noClose' => $noClose
                 ];
 
@@ -3062,6 +3186,7 @@ class Cpdf
                         $this->prep_callback[$info['func']] = $info;
                     } else {
                         unset($this->prep_callback[$info['func']]);
+                        $info['isOpen'] = false;
                     }
 
                     // edge case

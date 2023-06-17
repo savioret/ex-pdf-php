@@ -12,7 +12,7 @@ class Creport extends Cezpdf
     }
 }
 $pdf = new Creport('a4', 'portrait');
-
+$pdf->allowTags(['image']);
 $pdf->ezSetMargins(20, 20, 20, 20);
 
 $mainFont = 'Times-Roman';
