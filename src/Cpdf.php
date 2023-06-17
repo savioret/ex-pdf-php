@@ -3003,6 +3003,10 @@ class Cpdf
                 $x = $override['x'];
             }
 
+            if (isset($override['y'])) {
+                $y = $override['y'];
+            }
+
             if (isset($override['size'])) {
                 $size = $override['size'];
             }
