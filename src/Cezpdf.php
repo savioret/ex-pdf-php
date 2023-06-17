@@ -2762,6 +2762,12 @@ class Cezpdf extends Cpdf
 
     /**
      * a callback function to support comment annotation.
+     * Use | in args to separe title and text.
+     * By default comment title is "Comment"
+     *
+     * Examples:
+     * <C:comment:Comment Title|Comment Text>
+     * <C:comment:Comment Text>
      *
      * @param $info callback info array
      */
@@ -2825,10 +2831,9 @@ class Cezpdf extends Cpdf
         $override = [];
         switch ($info['status']) {
             case 'prepare_start':
-                if (!isset($this->callback['indent']) && !isset($this->prep_callback['indent'])) {
+                if (!$info['isOpen']) {
                     $saved_x = $info['x'];
                 }
-                //$indent = 20;
                 if (isset($info['p'])) {
                     $indent = $info['p'];
                 }
@@ -2847,6 +2852,15 @@ class Cezpdf extends Cpdf
         return $override;
     }
 
+    /**
+     * callback function for inline font size.
+     * **Example**<br>
+     * <pre>
+     * $pdf->ezText('Default text <c:fontsize:50>Big Text</c:fontsize>');
+     * </pre>
+     *
+     * @param $info
+     */
     public function fontsize($info)
     {
         $override = []; // overriden options
@@ -2878,8 +2892,8 @@ class Cezpdf extends Cpdf
      * (the image will be scaled to the appropriate height).
      *
      * Supported filename in the image tag:
-     *   '<C:showimage:'.urlencode('http://myserver.mytld/myimage.png').'>'
-     *   '<C:showimage:'.urlencode('/home/my home/my image.png').'>'
+     *   '<C:image:'.urlencode('http://myserver.mytld/myimage.png').'>'
+     *   '<C:image:'.urlencode('/home/my home/my image.png').'>'
      * the url encoding is required for:
      *  - files from remote servers (first entry from above)
      *  - local files with whitespaces in the directory or file names
@@ -2887,7 +2901,7 @@ class Cezpdf extends Cpdf
      * local files without whitespaces in their filename can be specified without
      * url encoding:
      *
-     * '<C:showimage:/home/myhome/myimage.png>'
+     * '<C:image:/home/myhome/myimage.png>'
      *
      * the php gd2 extension must be enabled for remote files and local gif files.
      * local png- and jpeg-files are supported without the gd2 extension.
@@ -2900,7 +2914,7 @@ class Cezpdf extends Cpdf
 
         switch ($info['status']) {
             case 'prepare_start':
-                $opts = preg_split('/[, ]+/', trim($info['p']));
+                $opts = $this->parseCallbackArgs($info['p']);
 
                 // Set available width if nothing passed
                 if (empty($opts[1])) {
@@ -2908,7 +2922,7 @@ class Cezpdf extends Cpdf
                 }
                 $opts[0] = urldecode($opts[0]);
 
-                if (!isset($this->callback['image']) && !isset($this->prep_callback['image'])) {
+                if (!$info['isOpen']) {
                     $info['saved_x'] = $info['x'];
 
                     $imageInfo = getimagesize($opts[0]);
@@ -2930,7 +2944,7 @@ class Cezpdf extends Cpdf
                 break;
 
             case 'start':
-                $opts = preg_split('/[, ]+/', trim($info['p']));
+                $opts = $this->parseCallbackArgs($info['p']);
                 
                 // Set available width if nothing passed
                 if (empty($opts[1])) {
@@ -3016,7 +3030,7 @@ class Cezpdf extends Cpdf
         
         switch ($info['status']) {
             case 'prepare_start':
-                if (!isset($this->callback['bullet']) && !isset($this->prep_callback['bullet'])) {
+                if (!$info['isOpen']) {
                     if (isset($info['p'])) {
                         $options = $this->parseCallbackArgs($info['p']);
                     }
@@ -3038,7 +3052,6 @@ class Cezpdf extends Cpdf
                 $override['x'] = $saved_x;
                 break;
             case 'start':
-                //$font_size = $this->GetFontSize();
                 $override['x'] = $saved_x;
                 // this is not the first line
                 if (empty($this->callback['bullet'])) {

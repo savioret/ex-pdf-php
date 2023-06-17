@@ -3077,6 +3077,7 @@ class Cpdf
         foreach (array_filter($this->prep_callback, function ($v) {
             return $v['isCustom'];
         }) as $info) {
+            $info['isOpen'] = true;
             $this->processPrepareCallback(false/*start*/, $info, $x, $y, $size, $width);
         }
 
@@ -3166,6 +3167,7 @@ class Cpdf
                     'height' => $this->getFontHeight($size),
                     'orgHeight' => $orgHeight,
                     'isCustom' => $isCustom,
+                    'isOpen' => isset($this->prep_callback[$func]),
                     'noClose' => $noClose
                 ];
 
@@ -3180,6 +3182,7 @@ class Cpdf
                         $this->prep_callback[$info['func']] = $info;
                     } else {
                         unset($this->prep_callback[$info['func']]);
+                        $info['isOpen'] = false;
                     }
 
                     // edge case
