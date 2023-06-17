@@ -47,14 +47,14 @@ $txt2 = "<b>Classic Chocolate Chip Cookies</b>
 // Using bullet callback, size and color
 $txt3 = "<b>Classic Chocolate Chip Cookies</b>
 
-<c:bullet:point_size=14,point_color=0#0.6#0.2>1 cup unsalted butter, softened</li>
-<c:bullet:point_size=14,point_color=0#0.6#0.2>1 cup granulated sugar</li>
-<c:bullet:point_size=14,point_color=0#0.6#0.2>1 cup packed brown sugar</li>
-<c:bullet:point_size=14,point_color=0#0.6#0.2>2 large eggs</li>
-<c:bullet:point_size=14,point_color=0#0.6#0.2>1 teaspoon vanilla extract</li>
-<c:bullet:point_size=14,point_color=0#0.6#0.2>3 cups all-purpose flour</li>
-<c:bullet:point_size=14,point_color=0#0.6#0.2>1 teaspoon baking soda</li>
-<c:bullet:point_size=14,point_color=0#0.6#0.2>2 cups chocolate chips</li>
+<c:bullet:bullet_size=14,bullet_color=0#0.6#0.2>1 cup unsalted butter, softened</li>
+<c:bullet:bullet_size=14,bullet_color=0#0.6#0.2>1 cup granulated sugar</li>
+<c:bullet:bullet_size=14,bullet_color=0#0.6#0.2>1 cup packed brown sugar</li>
+<c:bullet:bullet_size=14,bullet_color=0#0.6#0.2>2 large eggs</li>
+<c:bullet:bullet_size=14,bullet_color=0#0.6#0.2>1 teaspoon vanilla extract</li>
+<c:bullet:bullet_size=14,bullet_color=0#0.6#0.2>3 cups all-purpose flour</li>
+<c:bullet:bullet_size=14,bullet_color=0#0.6#0.2>1 teaspoon baking soda</li>
+<c:bullet:bullet_size=14,bullet_color=0#0.6#0.2>2 cups chocolate chips</li>
 ";
 
 $pdf->ezColumnsStart($options = ['num' => 2]);

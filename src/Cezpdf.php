@@ -2229,37 +2229,35 @@ class Cezpdf extends Cpdf
      * Draw a bullet shape for text enumerations with different properties
      *
      * @param mixed $options
-     *   'line_space' => 0.2, // separacion entre lineas (en puntos)
-     *   'shape' => 'circle', // forma del punto [circle|square|box]
-     *   'point_size' => 4, // tamaño del bullet (en puntos)
-     *   'margin' => 20, // sangrado izquierdo, similar a aleft pero relativo al cursor actual
-     *   'padding' => 10, // sangrado derecho despues del punto
-     *   'aleft' => 40, // posicion absoluta independientemente del margen
-     *   'point_color' => [1, 1, 0], // color del bullet
+     *   'shape'       => 'circle', // type of shape [circle|square|box]
+     *   'bullet_size' => 4, // the size of the bullet shape (en puntos)
+     *   'margin'      => 20, // indentation before the bullet, similar to aleft but relative to current x position
+     *   'aleft'       => 40, // absolute x position of to bullet
+     *   'bullet_color'=> [1, 1, 0], // normalized RGB color of the bullet shape
      * @param bool $test
-     * @return float
+     * @return float x coordinate where the bullet shape ends
      */
     public function ezBullet($options, $test = false)
     {
-        $pcolor = isset($options['point_color']) ? $options['point_color'] : null;
+        $pcolor = isset($options['bullet_color']) ? $options['bullet_color'] : null;
         $shape = isset($options['shape']) ? $options['shape'] : 'circle';
         $font_size = $this->ezGetFontSize();
-        $psize = isset($options['point_size']) ? $options['point_size'] : $font_size/2.5;
+        $psize = isset($options['bullet_size']) ? $options['bullet_size'] : $font_size/2.5;
         $margin = isset($options['margin']) ? $options['margin'] : 20;
 
-        $point_pos = $this->ezLeftMargin() + $margin;
+        $bullet_pos = $this->ezLeftMargin() + $margin;
         if (isset($options['aleft'])) {
             // absolute pos
-            $point_pos = $options['aleft'];
+            $bullet_pos = $options['aleft'];
         } elseif (isset($options['margin'])) {
             // relative to left margin
-            $point_pos = $this->ezLeftMargin() + $options['margin'];
+            $bullet_pos = $this->ezLeftMargin() + $options['margin'];
         }
 
         
 
         if ($test) {
-            return $point_pos + $psize;
+            return $bullet_pos + $psize;
         }
 
         $this->saveState();
@@ -2287,14 +2285,14 @@ class Cezpdf extends Cpdf
                 $r = $psize/2;
 
                 $this->filledEllipse(
-                    $point_pos+$r,
+                    $bullet_pos+$r,
                     $ypos,
                     $r
                 );
                 break;
             case 'square':
                 $this->filledRectangle(
-                    $point_pos,
+                    $bullet_pos,
                     $ypos-$psize/2,
                     $psize,
                     $psize
@@ -2302,7 +2300,7 @@ class Cezpdf extends Cpdf
                 break;
             case 'box':
                 $this->rectangle(
-                    $point_pos,
+                    $bullet_pos,
                     $ypos-$psize/2,
                     $psize,
                     $psize
@@ -2313,7 +2311,7 @@ class Cezpdf extends Cpdf
         $this->restoreState();
 
         //$this->ezSetY($saved_ypos);
-        return $point_pos + $psize;
+        return $bullet_pos + $psize;
     }
 
 
@@ -2324,12 +2322,20 @@ class Cezpdf extends Cpdf
      * @param string $txt text
      * @param string $size text size
      * @param array $options text and bullet options (combined)
+     *  This array accepts all options accepted by ezText and:
+     *   'line_space'  => 0.2, // space between bullet lines ( will be applied on the last line of a bullet paragraph )
+     *   'shape'       => 'circle', // type of shape [circle|square|box]
+     *   'bullet_size' => 4, // the size of the bullet shape (en puntos)
+     *   'margin'      => 20, // indentation before the bullet, similar to aleft but relative to current x position
+     *   'padding'     => 10, // space after the bullet and before the text
+     *   'aleft'       => 40, // absolute x position of to bullet
+     *   'bullet_color'=> [1, 1, 0], // normalized RGB color of the bullet shape
      * @return void
      */
     public function ezBulletText(string $txt, $size = '0', $options = [])
     {
         $topts = array_filter_keys($options, ['spacing', 'leading', 'justification', 'aleft', 'aright']);
-        $bopts = array_filter_keys($options, ['point_size', 'margin', 'padding', 'shape', 'point_color', 'line_space']);
+        $bopts = array_filter_keys($options, ['bullet_size', 'margin', 'padding', 'shape', 'bullet_color', 'line_space']);
         $font_size = $size? $size : $this->ezGetFontSize();
 
         foreach ($bopts as $k => $v) {
@@ -2912,7 +2918,7 @@ class Cezpdf extends Cpdf
                     }
                     $font_size = $this->ezGetFontSize();
                     // ?????
-                    $psize = isset($options['point_size']) ? $options['point_size'] : $font_size/2.5;
+                    $psize = isset($options['bullet_size']) ? $options['bullet_size'] : $font_size/2.5;
                     $padding = isset($options['padding']) ? $options['padding'] : $font_size * 0.7;
                     $margin = isset($options['margin']) ? $options['margin'] : 20;
 
@@ -2935,8 +2941,8 @@ class Cezpdf extends Cpdf
                     $h = $this->getFontHeight($this->ezGetFontSize()) * 0.95;
                     $y = $this->ezGetY();
                     $this->ezSetY($y + $h);
-                    if (isset($options['point_color']) && !is_array($options['point_color'])) {
-                        $options['point_color'] = explode('#', $options['point_color']);
+                    if (isset($options['bullet_color']) && !is_array($options['bullet_color'])) {
+                        $options['bullet_color'] = explode('#', $options['bullet_color']);
                     }
                     $this->ezBullet($options + ['aleft' => $saved_bullet_x]);
 
