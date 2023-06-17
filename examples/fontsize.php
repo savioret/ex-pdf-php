@@ -3,6 +3,8 @@ include_once '../src/Cezpdf.php';
 
 $pdf = new CezPDF('a4');
 $pdf->selectFont('Helvetica');
+$pdf->allowTags(['fontsize']);
+
 $contentWidth = $pdf->ez['pageWidth'] - $pdf->ez['leftMargin'] - $pdf->ez['rightMargin'];
 
 $pdf->ez['fontSize'] = 10;

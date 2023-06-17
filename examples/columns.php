@@ -3,7 +3,7 @@ include_once '../src/Cezpdf.php';
 
 $pdf = new CezPDF('a4');
 $pdf->selectFont('Helvetica');
-
+$pdf->allowTags(['fontsize']);
 $txt = "<b><c:fontsize:16>Lorem ipsum dolor sit amet</c:fontsize></b>\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas tristique nec odio id euismod. Curabitur euismod ex volutpat bibendum eleifend. Donec pretium pretium nibh, at consectetur turpis porta et. Mauris pretium risus eget feugiat pellentesque. Quisque egestas sodales turpis, et euismod nisl vulputate at. Etiam convallis, turpis eu suscipit viverra, nulla ipsum vehicula metus, vitae posuere metus urna vitae dolor. Aliquam commodo non mi rutrum pretium. Ut facilisis turpis id quam tempus condimentum. In dapibus non est ac facilisis. Nulla vulputate suscipit ligula, vel finibus arcu ullamcorper id. Duis ut facilisis felis. Nam ullamcorper nunc eget sapien placerat aliquet. Etiam nec elit risus. In vitae neque et felis imperdiet rutrum. Sed sed metus erat. Duis sit amet lacus eu nisl fringilla venenatis.
 
 <i>Proin nulla nunc, eleifend nec turpis feugiat, iaculis scelerisque nisl. In vehicula id dui vitae varius. Cras rutrum vitae odio convallis accumsan. Sed eu ullamcorper lorem. Donec et sagittis magna. Nulla ac nisi dui. Praesent faucibus justo vel tortor consequat hendrerit. Phasellus libero leo, suscipit ac neque at, laoreet luctus est.</i>

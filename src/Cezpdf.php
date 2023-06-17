@@ -79,6 +79,23 @@ class Cezpdf extends Cpdf
      */
     protected $addTextMaxSize = 0;
 
+    /**
+     * An associative array to keep track of any available callback and the
+     * args regular expression. Example:
+     *  [
+     *     'comment' => ':.*?'
+     *  ]
+     *
+     * @var array
+     */
+    protected $registeredTags = [];
+
+    /**
+     * A copy of the Cpdf allowed tags so we always keep them active.
+     * @var string
+     */
+    protected $defaultAllowedTags = '';
+
 
     /**
      * Assuming that people don't want to specify the paper size using the absolute coordinates
@@ -357,8 +374,26 @@ class Cezpdf extends Cpdf
 
         $this->setBackground();
 
+        $this->registeredTags = [
+            'b' => '',
+            'strong' => '',
+            'i' => '',
+            'uline' => '',
+            'alink' => ':?.*?',
+            'ilink' => ':?.*?',
+            'color' => ':?[0-9,.]{0,}',
+            'bullet' => ':?.*?',
+            'indent' => ':?[0-9]*',
+            'fontsize' => ':?[0-9]*',
+            'image' => ':?.*?',
+            'showimage' => ':?.*?',
+            'comment' => ':.*?',
+        ];
+
+        $this->defaultAllowedTags = $this->allowedTags;
+
         // extend allowed tags
-        $this->allowedTags .= '|bullet:?.*?|indent:?[0-9]*|fontsize:?[0-9]*|image:?.*?|showimage:?.*?';
+        //$this->allowedTags .= '|bullet:?.*?|indent:?[0-9]*|fontsize:?[0-9]*|image:?.*?|showimage:?.*?';
     }
 
     /**
@@ -2336,7 +2371,6 @@ class Cezpdf extends Cpdf
     {
         $topts = array_filter_keys($options, ['spacing', 'leading', 'justification', 'aleft', 'aright']);
         $bopts = array_filter_keys($options, ['bullet_size', 'margin', 'padding', 'shape', 'bullet_color', 'line_space']);
-        $font_size = $size? $size : $this->ezGetFontSize();
 
         foreach ($bopts as $k => $v) {
             if (is_array($v)) {
@@ -2349,9 +2383,6 @@ class Cezpdf extends Cpdf
             $bopts_str = ':' . implode(',', $pairs);
         }
         $this->ezText("<c:bullet$bopts_str>$txt</c:bullet>", $size, $topts);
-
-        // ezText changes font size, so restore TODO:Review this
-        // $this->ez['fontSize'] = $font_size;
     }
 
     /**
@@ -2526,16 +2557,89 @@ class Cezpdf extends Cpdf
     }
 
 
-    function parseCallbackArgs(string $text, $sep = ',') : array
+    //------------------------------------
+    //  Callback related functions
+    //------------------------------------
+
+
+    /**
+     * Allow a list of available tags
+     * Note this function will not work on tags that have not been previously registered.
+     * @see registerTag
+     * @param array $names the list of pre-registered tags that must be allowed
+     */
+    public function allowTags($names)
     {
-        $values = [];
-        $items = explode($sep, $text);
-        foreach ($items as $item) {
-            $pair = explode('=', $item);
-            $values[trim($pair[0])] = trim($pair[1]);
+        $regex = '';
+        foreach($names as $name) {
+            $regex .= '|'.$name.$this->registeredTags[$name];
+        }
+        $this->allowedTags = $this->defaultAllowedTags . $regex;
+    }
+
+    /**
+     * Enable all registered tags at once
+     */
+    public function allowAllTags()
+    {
+        $this->allowTags(array_keys($this->registeredTags));
+    }
+
+    /**
+     * Registers a new callback and its args expression
+     * Example
+     * $this->resgisterTag('comment', ':.*?')
+     *
+     *  Note this tag will remain inactive unless it's explicitly allowed
+     * @see allowTag
+     *
+     * @param string $name name of the tag to registerd
+     * @param string $paramsRegex string that defines the callback arguments if any
+     * @return void
+     */
+    public function registerTag($name, $paramsRegex = '')
+    {
+        $this->registeredTags[$name] = $paramsRegex;
+    }
+
+    /**
+     * Helper function to parse a list of arguments from a string.
+     * These arguments will be contained in a callback of type:
+     *   <c:tagname:arg1 arg2>
+     *
+     *  Examples:
+     *  "arg1 arg2 arg3" // Output: ['arg1', 'arg2', 'arg3']
+     *  "arg1,arg2,arg3" // Output: ['arg1', 'arg2', 'arg3']
+     *  "arg1=a arg2=b arg3=c" // Output: ['arg1' => 'a', 'arg2' => 'b', 'arg3' => 'c']
+     *  "arg1=a, arg2=b, arg3=c" // Output: ['arg1' => 'a', 'arg2' => 'b', 'arg3' => 'c']
+     *
+     *   // using custom separators ',|'
+     *  "arg1,|arg2,|arg3" // Output: ['arg1', 'arg2', 'arg3']
+     *
+     * @param string $string the text containing parseable arguments
+     * @param string $sep allowed separators
+     * @return array
+     */
+    protected function parseCallbackArgs($string, $separators = ' ,') {
+        $args = array();
+
+        // Check if the string contains key-value pairs
+        if (strpos($string, '=') !== false) {
+            $pairs = preg_split('/[' . $separators . ']/', $string);
+            foreach ($pairs as $pair) {
+                $parts = explode('=', $pair);
+                if (count($parts) === 2) {
+                    $key = trim($parts[0]);
+                    $value = trim($parts[1]);
+                    $args[$key] = $value;
+                }
+            }
+        } else {
+            // The string contains space-separated arguments
+            $args = preg_split('/[' . $separators . ']/', $string);
         }
 
-        return $values;
+        return $args;
     }
 
     /**

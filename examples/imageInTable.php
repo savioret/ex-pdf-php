@@ -2,7 +2,7 @@
 include_once '../src/Cezpdf.php';
 
 $pdf = new Cezpdf('a4');
-
+$pdf->allowTags(['image']);
 $pdf->selectFont('Helvetica');
 
 $image = '../ros.jpg';

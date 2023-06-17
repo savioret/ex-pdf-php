@@ -8,7 +8,7 @@ include 'Cezpdf.php';
 $pdf = new Cezpdf('a4', 'portrait');
 
 // IMPORTANT: In version >= 0.12.0 it is required to allow custom tags (by using $pdf->allowedTags) before using it
-$pdf->allowedTags .= '|comment:.*?';
+$pdf->allowTags(['comment']);
 
 $pdf->ezSetMargins(20, 20, 20, 20);
 

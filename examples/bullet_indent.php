@@ -3,6 +3,7 @@ include_once '../src/Cezpdf.php';
 
 $pdf = new CezPDF('a4');
 $pdf->selectFont('Helvetica');
+$pdf->allowTags(['bullet', 'indent']);
 
 // Using <li> tags
 $txt = "<b>Classic Chocolate Chip Cookies</b>
