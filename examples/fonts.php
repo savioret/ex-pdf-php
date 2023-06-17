@@ -4,14 +4,7 @@ date_default_timezone_set('UTC');
 
 include 'Cezpdf.php';
 
-class Creport extends Cezpdf
-{
-    public function __construct($p, $o)
-    {
-        parent::__construct($p, $o, 'none', []);
-    }
-}
-$pdf = new Creport('a4', 'portrait');
+$pdf = new Cezpdf('a4', 'portrait');
 
 $pdf->ezSetMargins(20, 20, 20, 20);
 $pdf->openHere('Fit');

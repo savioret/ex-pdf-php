@@ -2,7 +2,7 @@
 date_default_timezone_set('UTC');
 
 include_once '../src/Cezpdf.php';
-$pdf = new CezPDF('a4');
+$pdf = new Cezpdf('a4');
 
 $pdf->selectFont('Helvetica');
 
