@@ -71,7 +71,7 @@ if (empty($_GET['disable'])) {
     $result = '';
     for ($i=0; $i < count($parts); $i++) {
         if (($i % $frequency) == 0) {
-            $result .= '<c:color:'.( mt_rand(0.2*10, 1.0*10) / 10 ).','.( mt_rand(0.0*10, 0.2*10) / 10 ).','.( mt_rand(0.2*10, 0.5*10) / 10 ).'>'.$parts[$i].'</c:color> ';
+            $result .= '<c:color:'.$colors[$i%30][0].','.$colors[$i%30][1].','.$colors[$i%30][2].'>'.$parts[$i].'</c:color> ';
         } else {
             $result .= $parts[$i].' ';
         }
