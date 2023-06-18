@@ -3307,9 +3307,7 @@ class Cpdf
             return $v['text'];
         }, $parts));
 
-        if (($justification == 'full' && ($orgWidth / 100 * 90) < ($orgWidth - $width)) || $justification != 'full') {
-            $this->adjustWrapText($parsedText, $orgWidth - $width, $orgWidth, $x, $wordSpaceAdjust, $justification);
-        }
+        $this->adjustWrapText($parsedText, $orgWidth - $width, $orgWidth, $x, $wordSpaceAdjust, $justification);
 
         if ($test) {
             return $text;
