@@ -3297,8 +3297,6 @@ class Cpdf
         $orgWidth = $width;
         $orgX = $x;
 
-        $height = max($height, $this->GetFontHeight($size));
-
         $parts = $this->addTextWithDirectives($text, $x, $y, $size, $width, $justification, $angle, $wordSpaceAdjust);
 
         $this->beforeAddText($parts, $x, $y, $size, $text, $width, $orgWidth, $height, $justification, $angle, $wordSpaceAdjust, $test);
