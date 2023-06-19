@@ -30,6 +30,10 @@ class CpdfExamplesTest extends CpdfRenderBase
         $this->assertTrue( file_exists($this->outDir), $this->outDir." could not be created");
         $this->assertTrue( file_exists($this->refDir), $this->refDir." could not be created");
         $this->assertTrue( file_exists($this->outDir.'/ref'), $this->outDir.'/ref'." could not be created");
+
+        $this->cleanupDirectory($this->outDir, '*.png');
+        $this->cleanupDirectory($this->outDir, '*.pdf');
+        $this->cleanupDirectory($this->outDir.'/ref', '*.pdf');
     }
 
     /**

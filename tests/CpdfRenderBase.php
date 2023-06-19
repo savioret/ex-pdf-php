@@ -283,6 +283,20 @@ class CpdfRenderBase extends TestCase
         return $paths;
     }
 
+    public function cleanupDirectory($directory, $wildcard)
+    {
+        if (!$wildcard)
+            return;
+
+        $files = glob($directory . DIRECTORY_SEPARATOR . $wildcard);
+        
+        foreach ($files as $file) {
+            if (is_file($file)) {
+                unlink($file);
+            }
+        }
+    }
+
     public function rasterizePdfs($srcFolder, $dstFolder)
     {
         $files = $this->scanDirectory($srcFolder, 'pdf');
