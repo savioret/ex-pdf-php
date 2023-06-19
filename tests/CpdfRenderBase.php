@@ -26,10 +26,16 @@ class CpdfRenderBase extends TestCase
     protected $dirPath = '';
 
     /**
-     * List of excluded pdf generation scripts
+     * List of excluded pdf generation scripts (blacklist)
      * @var array
      */
     protected $excluded = [];
+
+    /**
+     * List of included pdf generation scripts (whitelist)
+     * @var array
+     */
+    protected $included = [];
 
     /**
      * ImageMagick binary path, get from env MAGICK_BINARY
@@ -75,6 +81,11 @@ class CpdfRenderBase extends TestCase
     public function isExcluded($testName) 
     {
         return in_array($testName, $this->excluded);
+    }
+
+    public function isIncluded($testName) 
+    {
+        return in_array($testName, $this->included);
     }
 
     public function locateSystemBinary($name)
@@ -289,6 +300,11 @@ class CpdfRenderBase extends TestCase
         $files = $this->scanDirectory($srcFolder, 'php');
         echo "\nScanning $srcFolder for script generation files\n";
         foreach ($files as $file) {
+            // whitelist check
+            if($this->included && !$this->isIncluded(pathinfo($file, PATHINFO_FILENAME))) {
+                continue;
+            }
+            // blacklist checl
             if($this->isExcluded(pathinfo($file, PATHINFO_FILENAME))) {
                 continue;
             }
