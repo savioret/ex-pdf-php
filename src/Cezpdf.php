@@ -1986,7 +1986,7 @@ class Cezpdf extends Cpdf
         // this function will intially be used to implement underlining support, but could be used for a range of other
         // purposes
         $search = ['<u>', '<U>', '</u>', '</U>', '</li><li>', '<li>', '</li>'];
-        $replace = ['<c:uline>', '<c:uline>', '</c:uline>', '</c:uline>', '</c:bullet>\n<c:bullet>', '<c:bullet>', '</c:bullet>'];
+        $replace = ['<c:uline>', '<c:uline>', '</c:uline>', '</c:uline>', "</c:bullet>\n<c:bullet>", '<c:bullet>', '</c:bullet>'];
 
         return str_ireplace($search, $replace, $text);
     }
