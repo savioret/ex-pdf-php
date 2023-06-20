@@ -1,7 +1,7 @@
 <?php
 date_default_timezone_set('UTC');
 
-include dirname(__FILE__).'/../../src/Cezpdf.php';
+include __DIR__.'/../../src/Cezpdf.php';
 
 $pdf = new Cezpdf('a4', 'portrait');
 

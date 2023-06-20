@@ -1,7 +1,6 @@
 <?php
-use PHPUnit\Framework\TestCase;
+namespace ROSPDF\tests;
 
-include_once "CpdfRenderBase.php";
 
 class CpdfFeaturesTest extends CpdfRenderBase
 {
@@ -9,7 +8,7 @@ class CpdfFeaturesTest extends CpdfRenderBase
     {
         parent::__construct();
 
-        $this->dirPath = dirname(__FILE__);
+        $this->dirPath = __DIR__;
 
         $this->outDir = $this->dirPath . '/out/scripts';
         $this->refDir = $this->dirPath . '/ref/scripts';
@@ -18,8 +17,10 @@ class CpdfFeaturesTest extends CpdfRenderBase
         $this->ensureDir($this->outDir.'/ref');
         $this->ensureDir($this->refDir);
 
+        $this->scriptsDir = $this->dirPath . '/scripts';
+
         // Image example contains JPG compression which is not reliable to compare
-        $this->excluded = ['image'];
+        $this->gen->excluded = ['image'];
     }
 
     public function test_Preparation() 
@@ -39,18 +40,11 @@ class CpdfFeaturesTest extends CpdfRenderBase
      */
     public function test_Scripts()
     {
-        print "Current directory:" . getcwd();
-
-        $scriptsDir = $this->dirPath . '/scripts';
-        
-        // Generate reference PDFs (Do this only to create a reference checkpoint)
-        // $this->generatePdfs($scriptsDir, $this->refDir);
-
         // Generate reference PNGs from reference PDFs
         $this->rasterizePdfs($this->refDir, $this->outDir."/ref");
 
         // Generate test PDFs
-        $this->generatePdfs($scriptsDir, $this->outDir);
+        $this->generatePdfs($this->scriptsDir, $this->outDir);
 
         // Generate test PNGs
         $this->rasterizePdfs($this->outDir, $this->outDir);

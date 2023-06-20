@@ -35,7 +35,10 @@
         "files": [
             "src/Cpdf.php",
             "src/Cezpdf.php"
-        ]
+        ],
+        "psr-4": {
+            "ROSPDF\\tests\\": "tests/"
+        }
     },
     "require": {
         "php": ">=5.6.0"
