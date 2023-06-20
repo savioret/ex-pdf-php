@@ -19,7 +19,7 @@ class CpdfReadmeTest extends CpdfRenderBase
 
         $this->scriptsDir = $this->dirPath . '/..';
 
-        // Image example contains JPG compression which is not reliable to compare
+        // Force only this script to be executed
         $this->gen->included = ['readme'];
     }
 

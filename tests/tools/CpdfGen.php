@@ -245,7 +245,7 @@ class CpdfGen
         return $retVal;
     }
 
-    public function scanDirectory($folder, $extension)
+    public static function scanDirectory($folder, $extension)
     {
         $files = scandir($folder);
         $paths = [];
@@ -259,7 +259,7 @@ class CpdfGen
         return $paths;
     }
 
-    public function cleanupDirectory($directory, $wildcard)
+    public static function cleanupDirectory($directory, $wildcard)
     {
         if (!$wildcard) {
             return;
@@ -272,6 +272,25 @@ class CpdfGen
                 unlink($file);
             }
         }
+    }
+
+    public static function getRelativePath($absolutePath, $baseDir)
+    {
+        $absolutePath = realpath($absolutePath);
+        $baseDir = realpath($baseDir);
+
+        $absolutePathParts = explode(DIRECTORY_SEPARATOR, $absolutePath);
+        $baseDirParts = explode(DIRECTORY_SEPARATOR, $baseDir);
+
+        $i = 0;
+        while (isset($absolutePathParts[$i]) && isset($baseDirParts[$i]) && $absolutePathParts[$i] === $baseDirParts[$i]) {
+            $i++;
+        }
+
+        $relativePathParts = array_slice($absolutePathParts, $i);
+        $relativePath = implode(DIRECTORY_SEPARATOR, $relativePathParts);
+
+        return $relativePath;
     }
 
     public function rasterizePdfs($srcFolder, $dstFolder)
@@ -288,7 +307,7 @@ class CpdfGen
                 continue;
             }
 
-            echo "Converting $file into png\n";
+            echo "Converting ".self::getRelativePath($file, __DIR__)." into png\n";
             $err ='';
             $this->convertPdfToPng($file, $dstFolder, $err);
         }
@@ -308,9 +327,11 @@ class CpdfGen
             if($this->isExcluded(pathinfo($file, PATHINFO_FILENAME))) {
                 continue;
             }
-            echo "Generating PDF script $file\n";
             $pdfFilepath = $this->replaceExtension($file, 'pdf');
             $dstFilepath = $dstFolder . '/' . basename($pdfFilepath);
+            
+            echo "Generating PDF script ".self::getRelativePath($file, __DIR__)." -> ".self::getRelativePath($dstFilepath, __DIR__)."\n";
+
             $output = '';
             $retVal = $this->runPdfScript($file, $dstFilepath, $output, $validateScriptCB);
 
@@ -328,7 +349,7 @@ class CpdfGen
         foreach ($srcFiles as $fname=>$file) {
             if (isset($dstFiles[$fname])) {
                 $diff = $this->replaceExtension($dstFiles[$fname], 'diff.png');
-                echo "Comparing  $file <-> {$dstFiles[$fname]}\n";
+                echo "Comparing  ".self::getRelativePath($file, __DIR__)." <-> ".self::getRelativePath($dstFiles[$fname], __DIR__)."\n";
                 $rating = $this->compareImages($file, $dstFiles[$fname], $diff);
 
                 if($validationCB) {
