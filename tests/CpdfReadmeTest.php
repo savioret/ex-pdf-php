@@ -23,7 +23,7 @@ class CpdfReadmeTest extends CpdfRenderBase
         $this->gen->included = ['readme'];
     }
 
-    public function test_Preparation() 
+    protected function setUp() : void
     {
         $this->initChecks();
 
@@ -33,6 +33,8 @@ class CpdfReadmeTest extends CpdfRenderBase
         $this->cleanupDirectory($this->outDir, '*.png');
         $this->cleanupDirectory($this->outDir, '*.pdf');
         $this->cleanupDirectory($this->outDir.'/ref', '*.pdf');
+
+        parent::setUp();
     }
 
     /**

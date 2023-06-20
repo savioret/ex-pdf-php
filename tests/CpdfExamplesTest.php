@@ -24,7 +24,7 @@ class CpdfExamplesTest extends CpdfRenderBase
         $this->gen->excluded = ['image'];
     }
 
-    public function test_Preparation() 
+    protected function setUp() : void
     {
         $this->initChecks();
 
@@ -35,6 +35,8 @@ class CpdfExamplesTest extends CpdfRenderBase
         $this->cleanupDirectory($this->outDir, '*.png');
         $this->cleanupDirectory($this->outDir, '*.pdf');
         $this->cleanupDirectory($this->outDir.'/ref', '*.pdf');
+
+        parent::setUp();
     }
 
     /**
