@@ -9,7 +9,6 @@ $pdf->allowTags(['bullet', 'indent']);
 $txt = "<b>Classic Chocolate Chip Cookies</b>
 
 <li>1 cup unsalted butter, softened</li>
-<li>1 cup granulated sugar</li>
 <li>1 cup packed brown sugar</li>
 <li>2 large eggs</li>
 <li>1 teaspoon vanilla extract</li>
