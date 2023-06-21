@@ -75,11 +75,21 @@ $pdf = new Creport('a4', 'portrait');
 $pdf->selectFont('Helvetica');
 //$pdf->selectFont('Times-Roman');
 $pdf->allowTags(['superscript']);
+$myoptions = array(
+    'showHeadings'=>0,
+    'cols' => [['width' =>130], ['width' =>100]],
+    'fontSize' => 20
+);
+$data = [
+    ['<b>Formula 1</b>', 'n<c:superscript>2</c:superscript>·X<c:superscript>y</c:superscript>'],
+    ['<b>Formula 2</b>', 'n<c:superscript>2</c:superscript>·R<c:superscript>2·x<c:superscript>3</c:superscript></c:superscript>']
+];
 
+$pdf->ezTable($data, '', '', $myoptions);
 $pdf->ezSetFontSize(200);
 $pdf->ezText("n<c:superscript>2</c:superscript>", 0, ['justification' => 'center']);
-$pdf->ezText("X<c:superscript>y</c:superscript>", 0, ['justification' => 'center']);
-$pdf->ezText("a<c:superscript:0.2>c</c:superscript>", 0, ['justification' => 'center']);
+$pdf->ezText("X<c:superscript>y</c:superscript>\n"
+            ."a<c:superscript:0.2>c</c:superscript>", 0, ['justification' => 'center']);
 
 if (isset($_GET['d']) && $_GET['d']) {
     echo "<pre>" . $pdf->ezOutput(true) . "</pre>";
