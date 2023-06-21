@@ -3020,18 +3020,23 @@ class Cezpdf extends Cpdf
 
     /**
      * callback function for bullets.
+     * Note this does not work exactly as an html list
+     * Items need to be separated by EOL's
+     * Format is:
+     *  <c:bullet:opt=val,opt=val>Item1</c:bullet>
+     *
+     * @see ezBullet for options details
      *
      * **Example**<br>
      * <pre>
-     * $pdf->ezText('<c:bullet:opt=val,opt=val>Text</c:ilink>');
+     * $pdf->ezText("<c:bullet:shape=square,margin=10>Item1</c:bullet>\n
+     *              "<c:bullet:shape=square,margin=10>Item2</c:bullet>");
      * </pre>
      *
      * @param $info
      */
-    public function bullet($info)
+    public function bullet(&$info)
     {
-        static $saved_x;
-        static $saved_bullet_x;
         static $options = [];
         
         $override = [];
@@ -3051,16 +3056,16 @@ class Cezpdf extends Cpdf
                     $xpos = $info['x'];
 
                     // Store left side of bullet (returns right by default)
-                    $saved_bullet_x = $this->ezBullet(['aleft' => $xpos + $margin ] + $options, true /*test*/) - $psize;//$info['x'];
+                    $info['saved_bullet_x'] = $this->ezBullet(['aleft' => $xpos + $margin ] + $options, true /*test*/) - $psize;//$info['x'];
 
                     // store text position
-                    $saved_x = $saved_bullet_x + $psize + $padding;
+                    $info['saved_x'] = $info['saved_bullet_x'] + $psize + $padding;
                 }
                 // text position
-                $override['x'] = $saved_x;
+                $override['x'] = $info['saved_x'];
                 break;
             case 'start':
-                $override['x'] = $saved_x;
+                $override['x'] = $info['saved_x'];
                 // this is not the first line
                 if (empty($this->callback['bullet'])) {
                     $h = $this->getFontHeight($this->ezGetFontSize()) * 0.95;
@@ -3069,7 +3074,7 @@ class Cezpdf extends Cpdf
                     if (isset($options['bullet_color']) && !is_array($options['bullet_color'])) {
                         $options['bullet_color'] = explode('#', $options['bullet_color']);
                     }
-                    $this->ezBullet($options + ['aleft' => $saved_bullet_x]);
+                    $this->ezBullet($options + ['aleft' => $info['saved_bullet_x']]);
 
                     $this->ezSetY($y);
                 }
