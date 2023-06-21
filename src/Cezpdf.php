@@ -1773,6 +1773,7 @@ class Cezpdf extends Cpdf
                             $this->ezSetY($y + $height);
                             $colNewPage = 0;
                             if (isset($row[$colName])) {
+                                $row[$colName] = $this->ezProcessText($row[$colName]);
                                 if (isset($options['cols'][$colName]) && isset($options['cols'][$colName]['link']) && strlen($options['cols'][$colName]['link'])) {
                                     $lines = preg_split("[\r\n|\r|\n]", $row[$colName]);
                                     if (isset($row[$options['cols'][$colName]['link']]) && strlen($row[$options['cols'][$colName]['link']])) {
@@ -1799,7 +1800,6 @@ class Cezpdf extends Cpdf
 
                             $this->y -= $options['rowGap'];
                             foreach ($lines as $i=>$line) {
-                                $line = $this->ezProcessText($line);
                                 // set the text color
                                 // grab the defined colors for this cell
                                 if (isset($row[$colName.'Color'])) {
