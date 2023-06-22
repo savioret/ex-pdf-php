@@ -2283,7 +2283,7 @@ class Cezpdf extends Cpdf
      *
      * @param mixed $options
      *   'shape'       => 'circle', // type of shape [circle|square|box]
-     *   'bullet_size' => 4, // the size of the bullet shape (en puntos)
+     *   'bullet_size' => 4, // the size of the bullet shape
      *   'margin'      => 20, // indentation before the bullet, similar to aleft but relative to current x position
      *   'aleft'       => 40, // absolute x position of to bullet
      *   'bullet_color'=> [1, 1, 0], // normalized RGB color of the bullet shape
@@ -2546,7 +2546,7 @@ class Cezpdf extends Cpdf
         if ($yOffset) {
             $height = $yOffset;
             // out of page
-            if ($y - $yOffset < $this->ez['bottomMargin']) {
+            if (!$test && $y - $yOffset < $this->ez['bottomMargin']) {
                 // then make a new page
                 $this->ezNewPage();
                 $y = $this->y - $yOffset;
