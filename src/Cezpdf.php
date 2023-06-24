@@ -3047,6 +3047,8 @@ class Cezpdf extends Cpdf
      */
     public function bullet(&$info)
     {
+        static $saved_x;
+        static $saved_bullet_x;
         static $options = [];
         
         $override = [];
@@ -3066,32 +3068,32 @@ class Cezpdf extends Cpdf
                     $xpos = $info['x'];
 
                     // Store left side of bullet (returns right by default)
-                    $info['saved_bullet_x'] = $this->ezBullet(['aleft' => $xpos + $margin ] + $options, true /*test*/) - $psize;//$info['x'];
+                    $saved_bullet_x = $this->ezBullet(['aleft' => $xpos + $margin ] + $options, true /*test*/) - $psize;//$info['x'];
 
                     // store text position
-                    $info['saved_x'] = $info['saved_bullet_x'] + $psize + $padding;
+                    $saved_x = $saved_bullet_x + $psize + $padding;
                 }
                 // text position
-                $override['x'] = $info['saved_x'];
+                $override['x'] = $saved_x;
                 break;
             case 'start':
-                $override['x'] = $info['saved_x'];
+                $override['x'] = $saved_x;
                 // this is not the first line
-                if (empty($this->callback['bullet'])) {
+                if (!$info['isOpen']) {
                     $h = $this->getFontHeight($this->ezGetFontSize()) * 0.95;
                     $y = $this->ezGetY();
                     $this->ezSetY($y + $h);
                     if (isset($options['bullet_color']) && !is_array($options['bullet_color'])) {
                         $options['bullet_color'] = explode('#', $options['bullet_color']);
                     }
-                    $this->ezBullet($options + ['aleft' => $info['saved_bullet_x']]);
+                    $this->ezBullet($options + ['aleft' => $saved_bullet_x]);
 
                     $this->ezSetY($y);
                 }
                 break;
             case 'end':
                 // this is the last line
-                if (empty($this->callback['bullet'])) {
+                if (!$info['isOpen']) {
                     $h = $this->getFontHeight($this->ezGetFontSize());
                     $sepFactor = isset($options['line_space']) ? $options['line_space'] : 0.2;
                     $this->ezSetY($this->ezGetY() - 2*$h*$sepFactor);

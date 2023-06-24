@@ -2996,6 +2996,8 @@ class Cpdf
         $info['y'] = $y;
         $info['width'] = $width;
         $info['size'] = $size;
+        $info['isOpen'] = isset($this->callback[$info['func']]);
+
         $override = $this->{$info['func']}($info);
         if ($override) {
             if (isset($override['x'])) {
@@ -3376,6 +3378,7 @@ class Cpdf
             $info['status'] = 'end';
             $info['x'] = $x  + ($orgWidth - $width) + $xOffset;
             $info['y'] = $y;
+            $info['isOpen'] = true;
 
             $this->{$info['func']}($info);
         }
