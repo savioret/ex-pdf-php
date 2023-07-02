@@ -16,6 +16,7 @@
 date_default_timezone_set('UTC');
 
 include './src/Cezpdf.php';
+include './include/SyntaxHighlight.php';
 
 // define a class extension to allow the use of a callback to get the table of contents, and to put the dots in the toc
 class Creport extends Cezpdf
@@ -165,7 +166,19 @@ if (file_exists('github.jpg')) {
 
 //-----------------------------------------------------------
 // load up the document content
-$data = file('./data.txt');
+$data_str = file_get_contents('./data.txt');
+
+// Apply syntax highlight to text inside #C tags
+$data_str = preg_replace_callback('/'.PHP_EOL.'\s*#C\s*'.PHP_EOL.'(.*?)'.PHP_EOL.'\s*#c\s*'.PHP_EOL.'/s', function ($matches) {
+    return "\n\n#C\n\n" .SyntaxHighlight::process($matches[1]). "\n\n#c\n\n";
+}, $data_str);
+
+//$data_str = preg_replace_callback('/'.PHP_EOL.'\s*#C\s*(['.PHP_EOL.']*)(.*?)(['.PHP_EOL.']*)\s*#c\s*'.PHP_EOL.'/s', function ($matches) {
+//     return "\n#C".$matches[1] .SyntaxHighlight::process($matches[2]). $matches[3]."#c\n";
+// }, $data_str);
+
+
+$data = explode("\n", $data_str);
 
 $pdf->ezNewPage();
 
@@ -293,6 +306,7 @@ if (isset($_GET['d']) && $_GET['d']) {
     echo $pdf->ezOutput(true);
     echo "</pre>";
 } else {
+    //echo $data_str;
     $pdf->ezStream(['Content-Disposition' => 'readme.pdf']);
 }
 
