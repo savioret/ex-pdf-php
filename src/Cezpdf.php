@@ -1841,14 +1841,6 @@ class Cezpdf extends Cpdf
                                     } else {
                                         if (isset($options['cols'][$colName]) && isset($options['cols'][$colName]['justification'])) {
                                             $just = $options['cols'][$colName]['justification'];
-
-                                            if ($just == 'full' && (empty($lines[$i + 1]) || count($lines) == $i + 1)) {
-                                                // do not fully justify if its the absolute last line (taking line breaks into account)
-                                                $tmp = $this->addText($pos[$colName], $this->y, $options['fontSize'], $line, $maxWidth[$colName], $just, 0,0,1);
-                                                if (!strlen($tmp)) {
-                                                    $just = "left";
-                                                }
-                                            }
                                         } else {
                                             $just = 'left';
                                         }
@@ -2107,15 +2099,7 @@ class Cezpdf extends Cpdf
                 } else {
                     $right = $this->ez['pageWidth'] - $this->ez['rightMargin'] - ((is_array($options) && isset($options['right'])) ? $options['right'] : 0);
                 }
-                
-                if ($just == 'full' && (empty($lines[$i + 1]) || $c == $i + 1)) {
-                    // do not fully justify if its the absolute last line (taking line breaks into account)
-                    $aux = $height;
-                    $tmp = $this->addTextEx($left, $this->y, $size, $line, $right - $left, $aux, $just, 0, 0, 1);
-                    if (!strlen($tmp)) {
-                        $just = "left";
-                    }
-                }
+
                 $lineHeight = $height;
                 $line = $this->addTextEx($left, $this->y, $size, $line, $right - $left, $lineHeight, $just, 0, 0, $test);
                 $dy = 0;
@@ -2124,11 +2108,6 @@ class Cezpdf extends Cpdf
                 }
 
                 $this->y -= max(0, $lineHeight - $orgHeight);
-
-                if (is_array($options) && isset($options['justification'])) {
-                    // recover justification
-                    $just = $options['justification'];
-                }
             }
         }
 
@@ -2507,8 +2486,12 @@ class Cezpdf extends Cpdf
      */
     protected function beforeAddText(&$parts, &$x, &$y, &$size, &$text, &$width, $orgWidth, &$height, &$justification, &$angle, &$wordSpaceAdjust, $test)
     {
+        // Do not fully justify newlines or last lines
+        if ($justification == 'full' && $text == "") {
+            $justification = 'left';
+        }
+
         $yOffset = 0;
-        
         $maxHeight = 0;
         $orgSize = $size;
         $this->addTextMaxSize = 0;
